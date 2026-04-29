@@ -1,0 +1,315 @@
+<UserControl x:Class="ArcelikExcelApp.Views.UserManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:ArcelikExcelApp.Converters"
+             Background="#F4F6F8" Loaded="UserControl_Loaded">
+    <UserControl.Resources>
+        <converters:RoleToColorConverter x:Key="RoleToColorConverter"/>
+        <converters:ActiveToColorConverter x:Key="ActiveToColorConverter"/>
+        <converters:ActiveToTextConverter x:Key="ActiveToTextConverter"/>
+        <converters:BooleanToIconConverter x:Key="BooleanToIconConverter"/>
+        <converters:BooleanToColorConverter x:Key="BooleanToColorConverter"/>
+        <converters:BooleanToTextConverter x:Key="BooleanToTextConverter"/>
+    </UserControl.Resources>
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header Section -->
+        <Grid Grid.Row="0" Margin="0,0,0,30">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Width="50" Height="50" Background="#FFEAEA" CornerRadius="15">
+                    <materialDesign:PackIcon Kind="AccountSettingsOutline" Width="28" Height="28" Foreground="#E02020" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Margin="20,0,0,0">
+                    <TextBlock Text="Kullanıcı Yönetimi" FontSize="28" FontWeight="Bold" Foreground="#1A1A24"/>
+                    <TextBlock Text="Sistem erişim yetkilerini ve lisans anahtarlarını kontrol edin" FontSize="14" Foreground="#7E84A3" Margin="0,2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+            
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
+                <Button Click="BtnOpenNotificationDialog_Click" Margin="0,0,15,0"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        materialDesign:ButtonAssist.CornerRadius="12"
+                        Height="48" Padding="25,0" Background="#3949AB" Foreground="White" BorderBrush="#3949AB">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="BellPlusOutline" Foreground="White" Width="22" Height="22" Margin="0,0,10,0"/>
+                        <TextBlock Text="Bildirim Gönder" FontSize="15" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Click="BtnAddUser_Click"
+                        Style="{StaticResource MaterialDesignRaisedButton}"
+                        materialDesign:ButtonAssist.CornerRadius="12"
+                        Height="48" Padding="25,0" Background="#E02020" Foreground="White" BorderBrush="#E02020">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="Plus" Foreground="White" Width="22" Height="22" Margin="0,0,10,0"/>
+                        <TextBlock Text="Yeni Kullanıcı" FontSize="15" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Modern Filter Bar -->
+        <Border Grid.Row="1" Background="White" CornerRadius="18" Padding="25,12" Margin="0,0,0,25">
+            <Border.Effect>
+                <DropShadowEffect Color="Black" BlurRadius="15" Opacity="0.03" Direction="270" ShadowDepth="2"/>
+            </Border.Effect>
+            <Grid>
+                <StackPanel Orientation="Horizontal">
+                    <materialDesign:PackIcon Kind="Search" Foreground="#7E84A3" Width="22" Height="22" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                    <TextBox x:Name="TxtSearch" Width="300" materialDesign:HintAssist.Hint="Kullanıcı adına veya yetkiye göre filtrele..." 
+                             BorderThickness="0" materialDesign:TextFieldAssist.DecorationVisibility="Collapsed" 
+                             VerticalAlignment="Center" FontSize="14" Foreground="#1A1A24"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Premium Table Container -->
+        <materialDesign:Card Grid.Row="2" UniformCornerRadius="20" Background="White" Padding="15">
+            <DataGrid x:Name="GridUsers" AutoGenerateColumns="False" IsReadOnly="True" 
+                      SelectionMode="Single" Background="Transparent" BorderThickness="0"
+                      CanUserAddRows="False" GridLinesVisibility="None"
+                      HeadersVisibility="Column" HorizontalGridLinesBrush="#F8F9FB">
+                <DataGrid.Resources>
+                    <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Foreground" Value="#7E84A3"/>
+                        <Setter Property="FontWeight" Value="SemiBold"/>
+                        <Setter Property="FontSize" Value="13"/>
+                        <Setter Property="Height" Value="50"/>
+                        <Setter Property="Padding" Value="15,0"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="BorderBrush" Value="#F1F3F9"/>
+                    </Style>
+                    <Style TargetType="DataGridRow" BasedOn="{StaticResource MaterialDesignDataGridRow}">
+                        <Setter Property="Height" Value="65"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        <Setter Property="BorderBrush" Value="#F8F9FB"/>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTemplateColumn Header="Kullanıcı Bilgisi" Width="*">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="15,0">
+                                    <Border Width="36" Height="36" Background="#F1F3F9" CornerRadius="18">
+                                        <materialDesign:PackIcon Kind="Account" Foreground="#7E84A3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding Username}" FontWeight="Bold" FontSize="15" 
+                                               Foreground="#1A1A24" VerticalAlignment="Center" Margin="12,0,0,0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                    
+                    <DataGridTemplateColumn Header="Yetki" Width="120">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Border Background="{Binding Role, Converter={StaticResource RoleToColorConverter}}" 
+                                        Padding="12,5" CornerRadius="10" HorizontalAlignment="Left" 
+                                        VerticalAlignment="Center" Margin="0,0">
+                                    <TextBlock Text="{Binding Role}" FontSize="12" FontWeight="Bold" Foreground="White"/>
+                                </Border>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTextColumn Header="Lisans Anahtarı" Binding="{Binding LicenseKey}" Width="180">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="FontFamily" Value="Consolas"/>
+                                <Setter Property="FontSize" Value="13"/>
+                                <Setter Property="Foreground" Value="#555555"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                <Setter Property="Padding" Value="0,0"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+
+                    <DataGridTextColumn Header="Son Aktivite" Binding="{Binding LastLoginDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="160">
+                         <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="#7E84A3"/>
+                                <Setter Property="FontSize" Value="13"/>
+                                <Setter Property="VerticalAlignment" Value="Center"/>
+                                <Setter Property="Padding" Value="0,0"/>
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    
+                    <DataGridTemplateColumn Header="Cihaz" Width="130">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="0,0" VerticalAlignment="Center">
+                                    <materialDesign:PackIcon Kind="{Binding IsActivated, Converter={StaticResource BooleanToIconConverter}}" 
+                                                           Foreground="{Binding IsActivated, Converter={StaticResource BooleanToColorConverter}}"
+                                                           Width="18" Height="18" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding IsActivated, Converter={StaticResource BooleanToTextConverter}}" 
+                                               Margin="8,0,0,0" FontSize="13" VerticalAlignment="Center" 
+                                               Foreground="{Binding IsActivated, Converter={StaticResource BooleanToColorConverter}}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+
+                    <DataGridTemplateColumn Header="Aksiyon" Width="150">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" 
+                                            Width="36" Height="36" Margin="0,0,2,0"
+                                            ToolTip="Düzenle" Click="BtnEditUser_Click"
+                                            Foreground="#3949AB">
+                                        <materialDesign:PackIcon Kind="PencilOutline" Width="20" Height="20"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" 
+                                            Width="36" Height="36" Margin="0,0,2,0"
+                                            ToolTip="Oturumu Sıfırla" Click="BtnResetSession_Click"
+                                            Foreground="#FF9800">
+                                        <materialDesign:PackIcon Kind="ShieldRefreshOutline" Width="20" Height="20"/>
+                                    </Button>
+                                    <Button Style="{StaticResource MaterialDesignIconButton}" 
+                                            Width="36" Height="36"
+                                            ToolTip="Cihazı Sıfırla" Click="BtnResetDevice_Click"
+                                            Foreground="#E91E63">
+                                        <materialDesign:PackIcon Kind="CellphoneLock" Width="20" Height="20"/>
+                                    </Button>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </materialDesign:Card>
+
+        <!-- Ultra-Modern Dialog Overlay -->
+        <Grid x:Name="DialogOverlay" Grid.RowSpan="3" Visibility="Collapsed">
+            <Border Background="#111A1A24">
+                <Border.Effect>
+                    <BlurEffect Radius="15"/>
+                </Border.Effect>
+            </Border>
+            <Grid Background="#22FFFFFF">
+            <materialDesign:Card Width="420" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                UniformCornerRadius="25" Background="White">
+                <materialDesign:Card.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="40" Opacity="0.2" Direction="270" ShadowDepth="10"/>
+                </materialDesign:Card.Effect>
+                <Border Padding="35">
+                    <StackPanel>
+                        <Border Width="60" Height="60" Background="#FFEAEA" CornerRadius="30" Margin="0,0,0,20">
+                            <materialDesign:PackIcon Kind="AccountPlus" Width="30" Height="30" Foreground="#E02020" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        
+                        <TextBlock x:Name="TxtDialogTitle" Text="Yeni Kullanıcı Tanımla" FontSize="22" FontWeight="Bold" 
+                                   Foreground="#1A1A24" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Kullanıcı detaylarını ve erişim yetkilerini belirleyin" FontSize="13" 
+                                   Foreground="#7E84A3" Margin="0,0,0,30" HorizontalAlignment="Center"/>
+                        
+                        <TextBox x:Name="TxtNewUsername" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="Kullanıcı Adı" Margin="0,0,0,15"
+                                 materialDesign:TextFieldAssist.HasClearButton="True"/>
+                        
+                        <PasswordBox x:Name="TxtNewPassword" Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                     materialDesign:HintAssist.Hint="Şifre" Margin="0,0,0,15"/>
+                        
+                        <ComboBox x:Name="CmbRole" Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                  materialDesign:HintAssist.Hint="Yetki Rolü" Margin="0,0,0,15">
+                            <ComboBoxItem Content="User" IsSelected="True"/>
+                            <ComboBoxItem Content="Admin"/>
+                        </ComboBox>
+                        
+                        <TextBox x:Name="TxtNewLicenseKey" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="Lisans Anahtarı" Margin="0,0,0,10" 
+                                 IsReadOnly="True" Foreground="#7E84A3"/>
+                        
+                        <TextBlock x:Name="TxtUserError" Foreground="#D32F2F" FontSize="13" Margin="0,0,0,20" 
+                                 HorizontalAlignment="Left" Visibility="Collapsed" TextWrapping="Wrap"/>
+                        
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="1.5*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource MaterialDesignFlatButton}" 
+                                    Click="BtnCancel_Click" Foreground="#7E84A3" Height="48"/>
+                            <Button Grid.Column="1" Content="Kaydet ve Kapat" Foreground="White" Background="#E02020" BorderBrush="#E02020" 
+                                    materialDesign:ButtonAssist.CornerRadius="14" Height="48" FontWeight="SemiBold"
+                                    Click="BtnSaveUser_Click"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </materialDesign:Card>
+        </Grid>
+        </Grid>
+
+        <!-- Notification Dialog Overlay -->
+        <Grid x:Name="NotificationDialogOverlay" Grid.RowSpan="3" Visibility="Collapsed">
+            <Border Background="#111A1A24">
+                <Border.Effect>
+                    <BlurEffect Radius="15"/>
+                </Border.Effect>
+            </Border>
+            <Grid Background="#22FFFFFF">
+                <materialDesign:Card Width="450" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                    UniformCornerRadius="25" Background="White">
+                    <materialDesign:Card.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="40" Opacity="0.2" Direction="270" ShadowDepth="10"/>
+                    </materialDesign:Card.Effect>
+                    <Border Padding="35">
+                        <StackPanel>
+                            <Border Width="60" Height="60" Background="#E8EAF6" CornerRadius="30" Margin="0,0,0,20">
+                                <materialDesign:PackIcon Kind="BellRingOutline" Width="30" Height="30" Foreground="#3949AB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            
+                            <TextBlock Text="Bildirim Oluştur" FontSize="22" FontWeight="Bold" 
+                                       Foreground="#1A1A24" Margin="0,0,0,10" HorizontalAlignment="Center"/>
+                            <TextBlock Text="Kullanıcılara anlık mesaj gönderin" FontSize="13" 
+                                       Foreground="#7E84A3" Margin="0,5,0,30" HorizontalAlignment="Center"/>
+                            
+                            <ComboBox x:Name="CmbNotifyUser" Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      materialDesign:HintAssist.Hint="Alıcı" Margin="0,0,0,15">
+                                <ComboBoxItem Content="Tüm Kullanıcılar" IsSelected="True" Tag="All"/>
+                            </ComboBox>
+                            
+                            <TextBox x:Name="TxtNotifyTitle" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Bildirim Başlığı" Margin="0,0,0,15"/>
+                            
+                            <TextBox x:Name="TxtNotifyMessage" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Mesaj İçeriği" Margin="0,0,0,15"
+                                     AcceptsReturn="True" Height="100" VerticalContentAlignment="Top" Padding="15"/>
+                            
+                            <ComboBox x:Name="CmbNotifyType" Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                      materialDesign:HintAssist.Hint="Bildirim Tipi" Margin="0,0,0,20">
+                                <ComboBoxItem Content="Bilgi (Info)" Tag="Info" IsSelected="True"/>
+                                <ComboBoxItem Content="Başarı (Success)" Tag="Success"/>
+                                <ComboBoxItem Content="Uyarı (Warning)" Tag="Warning"/>
+                                <ComboBoxItem Content="Hata (Error)" Tag="Error"/>
+                            </ComboBox>
+
+                            <TextBlock x:Name="TxtNotifyError" Foreground="#D32F2F" FontSize="13" Margin="0,0,0,20" 
+                                     HorizontalAlignment="Left" Visibility="Collapsed" TextWrapping="Wrap"/>
+                            
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="1.5*"/>
+                                </Grid.ColumnDefinitions>
+                                <Button Grid.Column="0" Content="İptal" Style="{StaticResource MaterialDesignFlatButton}" 
+                                        Click="BtnCancelNotify_Click" Foreground="#7E84A3" Height="48"/>
+                                <Button Grid.Column="1" Content="Bildirimi Yayınla" Foreground="White" Background="#3949AB" BorderBrush="#3949AB" 
+                                        materialDesign:ButtonAssist.CornerRadius="14" Height="48" FontWeight="SemiBold"
+                                        Click="BtnSendNotification_Click"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </materialDesign:Card>
+            </Grid>
+        </Grid>
+    </Grid>
+</UserControl>

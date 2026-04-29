@@ -1,0 +1,119 @@
+<UserControl x:Class="ArcelikExcelApp.Views.ExcelViewer"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             Background="White">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300"/>
+            <ColumnDefinition Width="1"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Sol Panel: Dosya Listesi ve Yükleme -->
+        <Grid Grid.Column="0" Background="#F8FAFC">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Sürükle Bırak Alanı -->
+            <Border Grid.Row="0" Margin="16" BorderBrush="#CBD5E1" BorderThickness="2" CornerRadius="8"
+                    Background="White" Padding="20" AllowDrop="True"
+                    Drop="Border_Drop" Cursor="Hand" MouseLeftButtonDown="Border_MouseLeftButtonDown">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#F1F5F9"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                    <materialDesign:PackIcon Kind="FileExcelBox" Width="40" Height="40" Foreground="#10B981" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Excel Dosyası Aç" FontWeight="Bold" Foreground="#334155" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                    <TextBlock Text="(Tıkla veya Sürükle)" FontSize="11" Foreground="#94A3B8" HorizontalAlignment="Center"/>
+                </StackPanel>
+            </Border>
+
+            <!-- Arama Kutusu -->
+            <TextBox x:Name="TxtSearchFile" Grid.Row="1" Margin="16,0,16,16"
+                     materialDesign:HintAssist.Hint="Kayıtlı Dosyalarda Ara..."
+                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                     TextChanged="TxtSearchFile_TextChanged"/>
+
+            <!-- Veritabanı Dosya Listesi -->
+            <ListBox x:Name="ListFiles" Grid.Row="2" Margin="16,0,16,16" 
+                     Background="Transparent" BorderThickness="0"
+                     SelectionChanged="ListFiles_SelectionChanged"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Border Background="White" CornerRadius="8" Padding="12" Margin="0,0,0,8"
+                                BorderBrush="#E2E8F0" BorderThickness="1" Width="240">
+                            <StackPanel>
+                                <TextBlock Text="{Binding FileName}" FontWeight="SemiBold" Foreground="#0F172A" TextTrimming="CharacterEllipsis" ToolTip="{Binding FileName}"/>
+                                <TextBlock Text="{Binding UploadDate}" FontSize="11" Foreground="#64748B" Margin="0,4,0,0"/>
+                                <TextBlock Text="{Binding Category}" FontSize="11" FontWeight="Medium" Foreground="#E02020" Margin="0,2,0,0"/>
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            
+            <Grid x:Name="OverlayLoading" Grid.RowSpan="3" Background="#AAFFFFFF" Visibility="Collapsed">
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" IsIndeterminate="True" Width="40" Height="40" Foreground="#E02020" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Dosya Açılıyor..." Margin="0,12,0,0" FontWeight="SemiBold" Foreground="#334155"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- Ayraç -->
+        <Border Grid.Column="1" Background="#E2E8F0"/>
+
+        <!-- Sağ Panel: Excel Görüntüleyici -->
+        <Grid Grid.Column="2" Background="#F4F6F8">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Araç Çubuğu (Arama vb.) -->
+            <Border Grid.Row="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="16,10" x:Name="PnlExcelToolbar" Visibility="Collapsed">
+                <Grid>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBox x:Name="TxtSearchExcel" Width="200"
+                                 materialDesign:HintAssist.Hint="Aranacak Kelime..."
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 Padding="8,4" Height="32"
+                                 KeyDown="TxtSearchExcel_KeyDown"/>
+                        
+                        <Button x:Name="BtnSearch" Content="Ara" Click="BtnSearch_Click"
+                                Margin="8,0" Height="32" Padding="12,0"
+                                Style="{StaticResource MaterialDesignRaisedButton}"
+                                Background="#E02020" BorderBrush="Transparent" Foreground="White"/>
+
+                        <Button x:Name="BtnNextMatch" Content="Sonraki" Click="BtnNextMatch_Click"
+                                Height="32" Padding="12,0"
+                                Style="{StaticResource MaterialDesignOutlinedButton}"
+                                Foreground="#E02020" BorderBrush="#E02020"/>
+
+                        <TextBlock Text="* Enter ile ara / Sonrakine geç" VerticalAlignment="Center" Margin="10,0,0,0" FontSize="11" Foreground="#94A3B8"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <TabControl x:Name="TabWorksheets" Grid.Row="1" Style="{StaticResource MaterialDesignTabControl}"
+                        Background="White" BorderThickness="0"/>
+            
+            <StackPanel x:Name="PnlEmptyState" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center">
+                <materialDesign:PackIcon Kind="MicrosoftExcel" Width="80" Height="80" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
+                <TextBlock Text="Görüntülemek için sol taraftan bir dosya seçin veya sürükleyin." 
+                           FontSize="16" Foreground="#94A3B8" Margin="0,16,0,0"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</UserControl>

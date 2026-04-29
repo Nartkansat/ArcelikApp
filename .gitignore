@@ -1,0 +1,26 @@
+## Visual Studio
+.vs/
+[Bb]in/
+[Oo]bj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## .NET
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Temiz tutmak istediğimiz geçici build dosyaları
+temp_build/
+ArcelikExcelApp_rz5ikv0o_wpftmp.csproj
+
+## Local Storage (Eğer yerelde kalsın istiyorsanız buraya ekleyin, 
+## ama user "diğer bilgisayarlarda da olmalı" dediği için bunu commit etmeliyiz 
+## veya release'e dahil etmeliyiz. Şimdilik commit edilebilir kalsın.)
+# Storage/ 
+
+## Database (MySQL kullanıldığı için yerel .mdf vs yok ama yine de)
+*.db
+*.sqlite

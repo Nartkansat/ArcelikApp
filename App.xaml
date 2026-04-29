@@ -1,0 +1,17 @@
+<Application x:Class="ArcelikExcelApp.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <materialDesign:BundledTheme BaseTheme="Light" PrimaryColor="Red" SecondaryColor="Amber" />
+                <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Arçelik Custom Font -->
+            <FontFamily x:Key="ArcelikFont">pack://application:,,,/Assets/ArcelikTurkishBigCaps.ttf#Arcelik Turkish BigCaps</FontFamily>
+            <Geometry x:Key="ArcelikLogoGeometry">m19.954.236 5.736 15.763c-1.961 2.039-6.109 5.026-10.748 6.769-3.378 1.265-6.857 1.69-9.807 1.831l-5.135-15.415c3.394-.361 7.275-1.208 10.15-2.469 4.618-2.021 7.683-4.495 9.801-6.483z</Geometry>
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

@@ -1,0 +1,154 @@
+<UserControl x:Class="ArcelikExcelApp.Views.NotificationsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:converters="clr-namespace:ArcelikExcelApp.Converters"
+             Background="#F4F6F8" Loaded="UserControl_Loaded">
+    <UserControl.Resources>
+        <converters:BooleanToReadBackgroundConverter x:Key="BooleanToReadBackgroundConverter"/>
+        <converters:NotificationTypeToColorConverter x:Key="NotificationTypeToColorConverter"/>
+        <converters:NotificationTypeToIconConverter x:Key="NotificationTypeToIconConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+    </UserControl.Resources>
+    
+    <Grid Margin="30">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Grid Grid.Row="0" Margin="0,0,0,30">
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                <Border Width="50" Height="50" Background="#E3F2FD" CornerRadius="15">
+                    <materialDesign:PackIcon Kind="BellOutline" Width="28" Height="28" Foreground="#2196F3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Margin="20,0,0,0">
+                    <TextBlock Text="Tüm Bildirimler" FontSize="28" FontWeight="Bold" Foreground="#1A1A24"/>
+                    <TextBlock Text="Hesabınıza gönderilen tüm güncellemeleri ve duyuruları takip edin" FontSize="14" Foreground="#7E84A3" Margin="0,2,0,0"/>
+                </StackPanel>
+            </StackPanel>
+            
+            <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Click="BtnMarkAllRead_Click" Margin="0,0,15,0"
+                        Style="{StaticResource MaterialDesignFlatButton}" Foreground="#3949AB" FontWeight="SemiBold">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="CheckAll" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Tümünü Okundu İşaretle"/>
+                    </StackPanel>
+                </Button>
+
+                <Button Click="BtnDeleteAll_Click"
+                        Style="{StaticResource MaterialDesignFlatButton}" Foreground="#F44336" FontWeight="SemiBold">
+                    <StackPanel Orientation="Horizontal">
+                        <materialDesign:PackIcon Kind="DeleteSweepOutline" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Tümünü Sil"/>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Notifications List -->
+        <materialDesign:Card Grid.Row="1" UniformCornerRadius="20" Background="White" Padding="0">
+            <Grid>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <ItemsControl x:Name="GridNotifications">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Padding="30,20" BorderBrush="#F1F3F9" BorderThickness="0,0,0,1" 
+                                        Background="{Binding IsRead, Converter={StaticResource BooleanToReadBackgroundConverter}}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <Border Width="50" Height="50" CornerRadius="15" 
+                                                Background="{Binding Type, Converter={StaticResource NotificationTypeToColorConverter}, ConverterParameter=Light}">
+                                            <materialDesign:PackIcon Kind="{Binding Type, Converter={StaticResource NotificationTypeToIconConverter}}" 
+                                                                   Foreground="{Binding Type, Converter={StaticResource NotificationTypeToColorConverter}}"
+                                                                   Width="26" Height="26" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        
+                                        <StackPanel Grid.Column="1" Margin="25,0">
+                                            <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" Foreground="#1A1A24"/>
+                                            <TextBlock Text="{Binding Message}" FontSize="14" Foreground="#666A7D" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                                <materialDesign:PackIcon Kind="ClockOutline" Width="14" Height="14" Foreground="#BDBDBD" VerticalAlignment="Center"/>
+                                                <TextBlock Text="{Binding CreatedAt, StringFormat={}{0:dd MMMM yyyy HH:mm}}" FontSize="12" Foreground="#BDBDBD" Margin="6,0,0,0"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Button Style="{StaticResource MaterialDesignIconButton}" 
+                                                    Visibility="{Binding IsRead, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Inverse}"
+                                                    Click="BtnMarkRead_Click" Tag="{Binding Id}" ToolTip="Okundu İşaretle">
+                                                <materialDesign:PackIcon Kind="CheckCircleOutline" Foreground="#4CAF50"/>
+                                            </Button>
+
+                                            <Button Style="{StaticResource MaterialDesignIconButton}" 
+                                                    Click="BtnShowDetail_Click" Tag="{Binding Id}" ToolTip="Detayı Gör">
+                                                <materialDesign:PackIcon Kind="EyeOutline" Foreground="#3949AB"/>
+                                            </Button>
+
+                                            <Button Style="{StaticResource MaterialDesignIconButton}" 
+                                                    Click="BtnDelete_Click" Tag="{Binding Id}" ToolTip="Sil" Foreground="#F44336">
+                                                <materialDesign:PackIcon Kind="DeleteOutline"/>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                
+                <!-- Empty State -->
+                <StackPanel x:Name="EmptyState" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="Collapsed">
+                    <materialDesign:PackIcon Kind="BellOffOutline" Width="80" Height="80" Foreground="#F1F3F9" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Henüz bildiriminiz bulunmuyor" FontSize="18" Foreground="#BDBDBD" Margin="0,20,0,0"/>
+                </StackPanel>
+
+                <!-- Detail Overlay (Glassmorphism) -->
+                <Grid x:Name="NotificationDetailOverlay" Visibility="Collapsed">
+                    <Border Background="#111A1A24">
+                        <Border.Effect>
+                            <BlurEffect Radius="15"/>
+                        </Border.Effect>
+                    </Border>
+                    <Grid Background="#22FFFFFF">
+                        <materialDesign:Card Width="450" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                            UniformCornerRadius="25" Background="White">
+                            <materialDesign:Card.Effect>
+                                <DropShadowEffect Color="Black" BlurRadius="40" Opacity="0.2" Direction="270" ShadowDepth="10"/>
+                            </materialDesign:Card.Effect>
+                            <Border Padding="35">
+                                <StackPanel>
+                                    <Border x:Name="BorderDetailIcon" Width="60" Height="60" Background="#E3F2FD" CornerRadius="30" Margin="0,0,0,20">
+                                        <materialDesign:PackIcon x:Name="IconDetail" Kind="Information" Width="30" Height="30" Foreground="#2196F3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    
+                                    <TextBlock x:Name="TxtDetailTitle" Text="Bildirim Başlığı" FontSize="22" FontWeight="Bold" 
+                                               Foreground="#1A1A24" Margin="0,0,0,10" HorizontalAlignment="Center" TextAlignment="Center"/>
+                                    
+                                    <TextBlock x:Name="TxtDetailDate" Text="27 Nisan 18:12" FontSize="12" Foreground="#BDBDBD" 
+                                               Margin="0,0,0,20" HorizontalAlignment="Center"/>
+
+                                    <ScrollViewer MaxHeight="200" VerticalScrollBarVisibility="Auto" Margin="0,0,0,30">
+                                        <TextBlock x:Name="TxtDetailMessage" Text="Bildirim içeriği buraya gelecek..." FontSize="15" 
+                                                   Foreground="#666A7D" TextWrapping="Wrap" LineHeight="22" TextAlignment="Center"/>
+                                    </ScrollViewer>
+                                    
+                                    <Button Content="Kapat" Foreground="White" Background="#1A1A24" BorderBrush="#1A1A24" 
+                                            materialDesign:ButtonAssist.CornerRadius="14" Height="48" FontWeight="SemiBold"
+                                            Click="BtnCloseDetail_Click"/>
+                                </StackPanel>
+                            </Border>
+                        </materialDesign:Card>
+                    </Grid>
+                </Grid>
+            </Grid>
+        </materialDesign:Card>
+    </Grid>
+</UserControl>

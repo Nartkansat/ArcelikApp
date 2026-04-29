@@ -1,0 +1,82 @@
+name: ArcelikApp Auto Release
+
+on:
+  push:
+    tags:
+      - 'v*' # v1.0.0 gibi tag atıldığında çalışır
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore Dependencies
+      run: dotnet restore ArcelikExcelApp.csproj
+
+    - name: Build and Publish
+      run: dotnet publish ArcelikExcelApp.csproj -c Release -o publish --no-restore
+
+    - name: Prepare Update Package
+      shell: pwsh
+      run: |
+        # Gereksiz dosyaları temizle
+        Remove-Item -Path "publish\*.pdb" -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path "publish\*.xml" -Force -ErrorAction SilentlyContinue
+        
+        # Storage klasörünü dahil et (Eğer varsa)
+        if (Test-Path "Storage") {
+            Copy-Item -Path "Storage" -Destination "publish\" -Recurse -Force
+        }
+        
+        # Zip oluştur
+        Compress-Archive -Path "publish\*" -DestinationPath "update.zip" -Force
+
+    - name: Create Release
+      id: create_release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: update.zip
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Update Update.xml
+      shell: pwsh
+      run: |
+        $version = "${{ github.ref_name }}".Replace("v", "")
+        $downloadUrl = "https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/update.zip"
+        
+        $xmlContent = @"
+        <?xml version="1.0" encoding="UTF-8"?>
+        <item>
+            <version>$version</version>
+            <url>$downloadUrl</url>
+            <changelog>https://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}</changelog>
+            <mandatory>true</mandatory>
+        </item>
+        "@
+        
+        Set-Content -Path "update.xml" -Value $xmlContent
+
+    - name: Commit Update.xml
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add update.xml
+        git commit -m "Update update.xml to version ${{ github.ref_name }}"
+        git push origin main # Not: main branch adınız farklıysa güncelleyin
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
