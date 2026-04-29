@@ -18,6 +18,13 @@ namespace ArcelikExcelApp
         {
             InitializeComponent();
 
+            // Uygulama versiyonunu göster
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+            if (version != null)
+            {
+                TxtAppVersion.Text = $"v{version.Major}.{version.Minor}.{version.Build}";
+            }
+
             // Giriş yapan kullanıcı bilgilerini göster
             if (AuthService.CurrentUser != null)
             {

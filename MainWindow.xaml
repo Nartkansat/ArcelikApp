@@ -141,25 +141,29 @@
                 
                 <!-- Footer Profile -->
                 <Border Grid.Row="2" Margin="20" Background="#232635" CornerRadius="12" Padding="15">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" Background="#3A3F55">
-                            <materialDesign:PackIcon Kind="AccountTie" Width="24" Height="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
-                            <TextBlock x:Name="TxtUsername" Text="Yönetici" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
-                            <TextBlock x:Name="TxtRole" Text="Admin" Foreground="#4CAF50" FontSize="12"/>
-                        </StackPanel>
-                        <Button Grid.Column="2" Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}" 
-                                Width="30" Height="30" Background="Transparent" BorderBrush="Transparent"
-                                Click="BtnLogout_Click">
-                            <materialDesign:PackIcon Kind="Logout" Foreground="#EF5350" Width="18" Height="18"/>
-                        </Button>
-                    </Grid>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" Background="#3A3F55">
+                                <materialDesign:PackIcon Kind="AccountTie" Width="24" Height="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtUsername" Text="Yönetici" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
+                                <TextBlock x:Name="TxtRole" Text="Admin" Foreground="#4CAF50" FontSize="12"/>
+                            </StackPanel>
+                            <Button Grid.Column="2" Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}" 
+                                    Width="30" Height="30" Background="Transparent" BorderBrush="Transparent"
+                                    Click="BtnLogout_Click">
+                                <materialDesign:PackIcon Kind="Logout" Foreground="#EF5350" Width="18" Height="18"/>
+                            </Button>
+                        </Grid>
+                        <!-- Uygulama Versiyonu -->
+                        <TextBlock x:Name="TxtAppVersion" Text="v1.0.8" Foreground="#666A7D" FontSize="11" HorizontalAlignment="Center" Margin="0,15,0,0"/>
+                    </StackPanel>
                 </Border>
             </Grid>
         </Border>
