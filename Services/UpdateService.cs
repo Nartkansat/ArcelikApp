@@ -1,51 +1,29 @@
 using System;
-using System.Threading.Tasks;
-using Velopack;
-using Velopack.Sources;
-using System.Windows;
+using AutoUpdaterDotNET;
 
 namespace ArcelikApp.Services
 {
     public static class UpdateService
     {
-        // GitHub repository URL
-        private const string GithubRepoUrl = "https://github.com/nartkansat/ArcelikApp";
+        // GitHub deponuz Public olduğu için direkt raw URL kullanıyoruz.
+        private const string UpdateXmlUrl = "https://raw.githubusercontent.com/nartkansat/ArcelikApp/main/update.xml";
 
-        public static async Task CheckForUpdatesAsync()
+        public static void CheckForUpdates()
         {
-            try
+            AutoUpdater.ShowRemindLaterButton = true;
+            AutoUpdater.ShowSkipButton = false;
+            AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.DownloadPath = Environment.CurrentDirectory;
+            
+            try 
             {
-                // Velopack UpdateManager oluştur
-                var mgr = new UpdateManager(new GithubSource(GithubRepoUrl, null, false));
-
-                // Güncelleme kontrolü yap
-                var newVersion = await mgr.CheckForUpdatesAsync();
-                if (newVersion == null)
-                {
-                    return; // Güncelleme yok
-                }
-
-                // Güncelleme bulundu, indir
-                await mgr.DownloadUpdatesAsync(newVersion);
-
-                // Kullanıcıya sor
-                var result = MessageBox.Show(
-                    $"Yeni bir sürüm mevcut ({newVersion.TargetFullRelease.Version}). Şimdi yükleyip yeniden başlatmak ister misiniz?",
-                    "Güncelleme Hazır",
-                    MessageBoxButton.YesNo,
-                    MessageBoxImage.Information);
-
-                if (result == MessageBoxResult.Yes)
-                {
-                    // Güncellemeyi uygula ve yeniden başlat
-                    mgr.ApplyUpdatesAndRestart(newVersion);
-                }
+                AutoUpdater.Start(UpdateXmlUrl);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Hata durumunda sessizce logla veya kullanıcıya bildir (opsiyonel)
-                System.Diagnostics.Debug.WriteLine($"Velopack Hatası: {ex.Message}");
+                // Hata durumunda sessiz kalabilir veya bildirim verebilirsiniz.
             }
         }
     }
 }
+

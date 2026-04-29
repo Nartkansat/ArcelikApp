@@ -5,7 +5,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
 using ArcelikExcelApp.Views;
-using Velopack;
 using ArcelikApp.Services;
 
 namespace ArcelikExcelApp;
@@ -20,15 +19,14 @@ public partial class App : Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
-        // Velopack: Kurulum ve güncelleme olaylarını işle (Kısayol oluşturma vb.)
-        VelopackApp.Build().Run();
+
 
         base.OnStartup(e);
 
         // Güncelleme kontrolü (arka planda)
-        _ = Task.Run(async () =>
+        _ = Task.Run(() =>
         {
-            try { await UpdateService.CheckForUpdatesAsync(); } catch { }
+            try { UpdateService.CheckForUpdates(); } catch { }
         });
 
         // WAMP kontrolünü arka planda başlat (UI'ı bloke etme)
