@@ -15,9 +15,9 @@ namespace ArcelikApp.Services
 
         public static void CheckForUpdates()
         {
-            if (string.IsNullOrEmpty(GitHubToken) || GitHubToken == "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")
+            if (string.IsNullOrEmpty(GitHubToken))
             {
-                // Token ayarlanmamışsa güncelleme kontrolü yapma (Hata vermemesi için)
+                // Token ayarlanmamışsa güncelleme kontrolü yapma
                 return;
             }
 
@@ -33,7 +33,17 @@ namespace ArcelikApp.Services
             AutoUpdater.DownloadPath = Environment.CurrentDirectory;
             
             // Güncelleme kontrolünü başlat
-            AutoUpdater.Start(UpdateXmlUrl);
+            try 
+            {
+                AutoUpdater.Start(UpdateXmlUrl);
+            }
+            catch (Exception ex)
+            {
+                NotificationService.ShowToast(
+                    "Güncelleme Hatası", 
+                    "Güncelleme sunucusuna bağlanırken bir sorun oluştu.", 
+                    "Error");
+            }
         }
     }
 }
