@@ -96,7 +96,7 @@
                                 
                                 <TextBlock x:Name="TxtResetError" Foreground="#D32F2F" FontSize="12" Margin="0,5,0,15" HorizontalAlignment="Center" Visibility="Collapsed" TextWrapping="Wrap" TextAlignment="Center"/>
 
-                                <Button Content="Şifreyi Sıfırla" Foreground="White" Background="#E02020" BorderBrush="#E02020" Height="50" materialDesign:ButtonAssist.CornerRadius="12" FontWeight="Bold" Click="BtnConfirmReset_Click"/>
+                                <Button x:Name="BtnConfirmReset" Content="Şifreyi Sıfırla" Foreground="White" Background="#E02020" BorderBrush="#E02020" Height="50" materialDesign:ButtonAssist.CornerRadius="12" FontWeight="Bold" Click="BtnConfirmReset_Click"/>
                             </StackPanel>
                         </Border>
                         

@@ -1,33 +1,50 @@
 using System;
-using System.Collections.Generic;
-using System.Net.Http;
-using AutoUpdaterDotNET;
+using System.Threading.Tasks;
+using Velopack;
+using Velopack.Sources;
+using System.Windows;
 
 namespace ArcelikApp.Services
 {
     public static class UpdateService
     {
-        // GitHub deponuz artık Public olduğu için Token'a gerek yoktur.
-        private const string UpdateXmlUrl = "https://raw.githubusercontent.com/nartkansat/ArcelikApp/main/update.xml";
+        // GitHub repository URL
+        private const string GithubRepoUrl = "https://github.com/nartkansat/ArcelikApp";
 
-        public static void CheckForUpdates()
+        public static async Task CheckForUpdatesAsync()
         {
-            AutoUpdater.ShowRemindLaterButton = true;
-            AutoUpdater.ShowSkipButton = false;
-            AutoUpdater.RunUpdateAsAdmin = true;
-            AutoUpdater.DownloadPath = Environment.CurrentDirectory;
-            
-            // Güncelleme kontrolünü başlat
-            try 
+            try
             {
-                AutoUpdater.Start(UpdateXmlUrl);
+                // Velopack UpdateManager oluştur
+                var mgr = new UpdateManager(new GithubSource(GithubRepoUrl, null, false));
+
+                // Güncelleme kontrolü yap
+                var newVersion = await mgr.CheckForUpdatesAsync();
+                if (newVersion == null)
+                {
+                    return; // Güncelleme yok
+                }
+
+                // Güncelleme bulundu, indir
+                await mgr.DownloadUpdatesAsync(newVersion);
+
+                // Kullanıcıya sor
+                var result = MessageBox.Show(
+                    $"Yeni bir sürüm mevcut ({newVersion.TargetFullRelease.Version}). Şimdi yükleyip yeniden başlatmak ister misiniz?",
+                    "Güncelleme Hazır",
+                    MessageBoxButton.YesNo,
+                    MessageBoxImage.Information);
+
+                if (result == MessageBoxResult.Yes)
+                {
+                    // Güncellemeyi uygula ve yeniden başlat
+                    mgr.ApplyUpdatesAndRestart(newVersion);
+                }
             }
             catch (Exception ex)
             {
-                NotificationService.ShowToast(
-                    "Güncelleme Hatası", 
-                    "Güncelleme sunucusuna bağlanırken bir sorun oluştu.", 
-                    "Error");
+                // Hata durumunda sessizce logla veya kullanıcıya bildir (opsiyonel)
+                System.Diagnostics.Debug.WriteLine($"Velopack Hatası: {ex.Message}");
             }
         }
     }

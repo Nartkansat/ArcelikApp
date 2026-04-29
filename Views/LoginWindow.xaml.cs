@@ -1,5 +1,6 @@
 using ArcelikApp.Data;
 using ArcelikApp.Services;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -20,35 +21,83 @@ namespace ArcelikExcelApp.Views
 
         private async void LoginWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            // Veritabanı bağlantısını kontrol et
-            bool isDbAvailable = false;
-            
+            await TryConnectAndInitialize();
+        }
+
+        /// <summary>
+        /// Veritabanı bağlantısını retry ile dener, başarılı olursa giriş ekranını gösterir.
+        /// </summary>
+        private async Task TryConnectAndInitialize()
+        {
+            // Bağlantı denenirken UI'ı göster ve durumu bildir
+            this.Visibility = Visibility.Visible;
+            ShowConnectionStatus("Veritabanı sunucusuna bağlanılıyor...");
+
             // Başlangıçta kısa bir gecikme verelim ki sistem hazırlansın
             await System.Threading.Tasks.Task.Delay(500);
 
-            try
-            {
-                await System.Threading.Tasks.Task.Run(() => {
-                    isDbAvailable = AppDbContext.TestConnection();
-                });
-            }
-            catch { }
+            // 3 deneme ile bağlantıyı test et (exponential backoff: 2s, 4s)
+            bool isDbAvailable = await AppDbContext.TestConnectionWithRetryAsync(maxRetries: 3);
+
+            HideConnectionStatus();
 
             if (!isDbAvailable)
             {
-                this.Visibility = Visibility.Visible; // Bağlantı yoksa ekranı göster ki hata mesajı görünsün
-                _ = ModernDialogService.ShowAsync("Sunucu Hatası", 
-                    "Veritabanı sunucusuna bağlanılamadı. Sunucu şu an kapalı olabilir veya internet bağlantınızda bir sorun olabilir.", 
-                    ModernDialogType.Error);
+                // Bağlantı başarısız — "Tekrar Dene" butonlu dialog göster
+                ShowRetryDialog(
+                    "Sunucu Bağlantı Hatası",
+                    "Veritabanı sunucusuna 3 deneme sonrası bağlanılamadı.\n\n" +
+                    "Olası nedenler:\n" +
+                    "• Ana bilgisayar kapalı olabilir\n" +
+                    "• Ağ bağlantınızda sorun olabilir\n" +
+                    "• MySQL servisi çalışmıyor olabilir\n\n" +
+                    "Tekrar denemek için aşağıdaki butona basın.");
                 return;
             }
 
             // Bağlantı varsa işlemlere devam et
-            AuthService.CreateInitialAdmin(); 
+            await Task.Run(() => AuthService.CreateInitialAdmin()); 
 
             // Artık otomatik giriş kontrolünü App.xaml.cs yapıyor
             // Bu pencere açıldıysa zaten manuel giriş gerekiyordur
-            this.Visibility = Visibility.Visible;
+            BtnLogin.IsEnabled = true;
+        }
+
+        private void ShowConnectionStatus(string message)
+        {
+            BtnLogin.IsEnabled = false;
+            TxtError.Text = message;
+            TxtError.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF9800"));
+            TxtError.Visibility = Visibility.Visible;
+        }
+
+        private void HideConnectionStatus()
+        {
+            TxtError.Visibility = Visibility.Collapsed;
+            TxtError.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#D32F2F"));
+        }
+
+        /// <summary>
+        /// Tekrar Dene butonlu bağlantı hatası dialogu gösterir.
+        /// </summary>
+        private void ShowRetryDialog(string title, string message)
+        {
+            TxtDialogTitle.Text = title;
+            TxtDialogMessage.Text = message;
+
+            // Hata teması
+            BorderDialogIcon.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FFF3E0"));
+            IconDialog.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF9800"));
+            IconDialog.Kind = MaterialDesignThemes.Wpf.PackIconKind.ServerNetworkOff;
+
+            BtnDialogConfirm.Content = "Tekrar Dene";
+            BtnDialogConfirm.Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF9800"));
+            BtnDialogConfirm.BorderBrush = BtnDialogConfirm.Background;
+
+            // Tekrar Dene butonuna özel tag atıyoruz
+            BtnDialogConfirm.Tag = "RetryConnection";
+
+            ModernDialogOverlay.Visibility = Visibility.Visible;
         }
 
         #region Modern Dialog System
@@ -85,6 +134,16 @@ namespace ArcelikExcelApp.Views
         private void BtnDialogResult_Click(object sender, RoutedEventArgs e)
         {
             ModernDialogOverlay.Visibility = Visibility.Collapsed;
+            
+            // "Tekrar Dene" butonuna basıldıysa bağlantıyı tekrar dene
+            if (BtnDialogConfirm.Tag as string == "RetryConnection")
+            {
+                BtnDialogConfirm.Tag = null;
+                BtnDialogConfirm.Content = "Tamam";
+                _ = TryConnectAndInitialize();
+                return;
+            }
+            
             ModernDialogService.SetResult(true);
         }
         #endregion
@@ -100,7 +159,7 @@ namespace ArcelikExcelApp.Views
             Application.Current.Shutdown();
         }
 
-        private void BtnLogin_Click(object sender, RoutedEventArgs e)
+        private async void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
             string username = TxtUsername.Text.Trim();
             string password = TxtPassword.Password;
@@ -113,7 +172,12 @@ namespace ArcelikExcelApp.Views
                 return;
             }
 
-            var result = AuthService.Login(username, password, license, remember);
+            BtnLogin.IsEnabled = false;
+            TxtError.Visibility = Visibility.Collapsed;
+
+            var result = await Task.Run(() => AuthService.Login(username, password, license, remember));
+
+            BtnLogin.IsEnabled = true;
 
             if (result.Success && result.User != null)
             {
@@ -142,7 +206,7 @@ namespace ArcelikExcelApp.Views
             ResetOverlay.Visibility = Visibility.Collapsed;
         }
 
-        private void BtnConfirmReset_Click(object sender, RoutedEventArgs e)
+        private async void BtnConfirmReset_Click(object sender, RoutedEventArgs e)
         {
             string username = TxtResetUsername.Text.Trim();
             string license = TxtResetLicense.Text.Trim();
@@ -154,7 +218,13 @@ namespace ArcelikExcelApp.Views
                 return;
             }
 
-            if (AuthService.ResetPassword(username, license, newPass))
+            BtnConfirmReset.IsEnabled = false;
+            
+            bool success = await Task.Run(() => AuthService.ResetPassword(username, license, newPass));
+            
+            BtnConfirmReset.IsEnabled = true;
+
+            if (success)
             {
                 ShowToast("Şifreniz başarıyla sıfırlandı.");
                 ResetOverlay.Visibility = Visibility.Collapsed;
