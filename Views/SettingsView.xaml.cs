@@ -37,7 +37,7 @@ namespace ArcelikExcelApp.Views
             }
         }
 
-        private void BtnUpdatePassword_Click(object sender, RoutedEventArgs e)
+        private async void BtnUpdatePassword_Click(object sender, RoutedEventArgs e)
         {
             string current = TxtCurrentPassword.Password;
             string newPass = TxtNewPassword.Password;
@@ -65,22 +65,28 @@ namespace ArcelikExcelApp.Views
 
             try
             {
-                using var db = new AppDbContext();
-                var user = db.Users.Find(AuthService.CurrentUser.Id);
-                if (user != null)
+                int userId = AuthService.CurrentUser.Id;
+                string newHash = SecurityHelper.HashPassword(newPass);
+                
+                await System.Threading.Tasks.Task.Run(() =>
                 {
-                    user.PasswordHash = SecurityHelper.HashPassword(newPass);
-                    db.SaveChanges();
-                    
-                    // Update current user hash as well
-                    AuthService.CurrentUser.PasswordHash = user.PasswordHash;
-                    
-                    ShowToast("Şifreniz başarıyla güncellendi.");
-                    TxtCurrentPassword.Password = "";
-                    TxtNewPassword.Password = "";
-                    TxtConfirmPassword.Password = "";
-                    TxtSettingsError.Visibility = Visibility.Collapsed;
-                }
+                    using var db = new AppDbContext();
+                    var user = db.Users.Find(userId);
+                    if (user != null)
+                    {
+                        user.PasswordHash = newHash;
+                        db.SaveChanges();
+                    }
+                });
+                
+                // Update current user hash as well
+                AuthService.CurrentUser.PasswordHash = newHash;
+                
+                ShowToast("Şifreniz başarıyla güncellendi.");
+                TxtCurrentPassword.Password = "";
+                TxtNewPassword.Password = "";
+                TxtConfirmPassword.Password = "";
+                TxtSettingsError.Visibility = Visibility.Collapsed;
             }
             catch (System.Exception ex)
             {

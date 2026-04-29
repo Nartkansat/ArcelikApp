@@ -1,4 +1,4 @@
-﻿using ArcelikApp.Models;
+using ArcelikApp.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 
@@ -36,7 +36,7 @@ namespace ArcelikApp.Data
             if (!options.IsConfigured)
             {
                 // Anabilgisayar ip adresi, db ye oradan baglaniliyor.
-                var connectionString = "Server=192.168.1.198;Port=3306;Database=ArcelikExcelDb;User=arcelik;Password=ArcelikWifi01;";
+                var connectionString = "Server=192.168.1.198;Port=3306;Database=ArcelikExcelDb;User=arcelik;Password=ArcelikWifi01;Pooling=true;MinimumPoolSize=2;MaximumPoolSize=10;ConnectionTimeout=5;DefaultCommandTimeout=10;";
                 options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
             }
         }

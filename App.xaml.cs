@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using System.Threading.Tasks;
 using System.Windows;
 using ArcelikExcelApp.Views;
 
@@ -16,20 +16,24 @@ public partial class App : Application
     private const string WampProcessName = "wampmanager";
     private const string WampExePath     = @"C:\wamp64\wampmanager.exe";
 
-    protected override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
-        // Güncelleme kontrolü
-        ArcelikApp.Services.UpdateService.CheckForUpdates();
-
-        EnsureWampRunning();
         base.OnStartup(e);
 
+        // Güncelleme kontrolü (arka planda)
+        _ = Task.Run(() =>
+        {
+            try { ArcelikApp.Services.UpdateService.CheckForUpdates(); } catch { }
+        });
+
+        // WAMP kontrolünü arka planda başlat (UI'ı bloke etme)
+        _ = Task.Run(() => EnsureWampRunningAsync());
+
+        // Auto-login kontrolünü arka planda yap
         bool autoLoginSuccess = false;
         try
         {
-            // Veritabanı henüz hazır olmayabilir, bu yüzden AuthService.CheckAutoLogin() içinde 
-            // bağlantı hatası alma riskine karşı try-catch kullanıyoruz.
-            autoLoginSuccess = ArcelikApp.Services.AuthService.CheckAutoLogin();
+            autoLoginSuccess = await Task.Run(() => ArcelikApp.Services.AuthService.CheckAutoLogin());
         }
         catch { }
 
@@ -46,60 +50,58 @@ public partial class App : Application
         }
     }
 
-    private static void EnsureWampRunning()
+    private static async Task EnsureWampRunningAsync()
     {
-        // Zaten çalışıyor mu?
-        bool calisiyorMu = Process.GetProcesses()
-            .Any(p => p.ProcessName.Equals(WampProcessName, StringComparison.OrdinalIgnoreCase));
-
-        if (calisiyorMu)
-        {
-            Debug.WriteLine($"{WampProcessName} zaten çalışıyor.");
-            return;
-        }
-
-        // Kurulu mu?
-        if (!File.Exists(WampExePath))
-        {
-            MessageBox.Show(
-                $"WampServer bulunamadı:\n{WampExePath}\n\nUygulama yine de başlatılıyor.",
-                "WampServer Bulunamadı",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-            return;
-        }
-
-        // Başlat (yönetici olarak)
         try
         {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName        = WampExePath,
-                UseShellExecute = true,
-                Verb            = "runas"
-            };
-            Process.Start(startInfo);
-            Debug.WriteLine($"{WampProcessName} başlatıldı.");
-        }
-        catch (System.ComponentModel.Win32Exception ex)
-        {
-            // Kullanıcı UAC'ı reddetti veya başka hata
-            MessageBox.Show(
-                $"WampManager başlatılamadı:\n{ex.Message}\n\nUygulama yine de başlatılıyor.",
-                "Başlatma Hatası",
-                MessageBoxButton.OK,
-                MessageBoxImage.Warning);
-            return;
-        }
+            // Zaten çalışıyor mu?
+            bool calisiyorMu = Process.GetProcesses()
+                .Any(p => p.ProcessName.Equals(WampProcessName, StringComparison.OrdinalIgnoreCase));
 
-        // WAMP process görünene kadar max 15 sn bekle
-        WaitForProcess(WampProcessName, timeoutSeconds: 15);
+            if (calisiyorMu)
+            {
+                Debug.WriteLine($"{WampProcessName} zaten çalışıyor.");
+                return;
+            }
+
+            // Kurulu mu?
+            if (!File.Exists(WampExePath))
+            {
+                Debug.WriteLine($"WampServer bulunamadı: {WampExePath}");
+                return;
+            }
+
+            // Başlat (yönetici olarak)
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName        = WampExePath,
+                    UseShellExecute = true,
+                    Verb            = "runas"
+                };
+                Process.Start(startInfo);
+                Debug.WriteLine($"{WampProcessName} başlatıldı.");
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                Debug.WriteLine($"WampManager başlatılamadı: {ex.Message}");
+                return;
+            }
+
+            // WAMP process görünene kadar max 10 sn bekle (async)
+            await WaitForProcessAsync(WampProcessName, timeoutSeconds: 10);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"EnsureWampRunning hatası: {ex.Message}");
+        }
     }
 
-    private static void WaitForProcess(string processName, int timeoutSeconds)
+    private static async Task WaitForProcessAsync(string processName, int timeoutSeconds)
     {
         int elapsed = 0;
-        const int interval = 500; // ms
+        const int interval = 1000; // ms
         int maxMs = timeoutSeconds * 1000;
 
         while (elapsed < maxMs)
@@ -109,7 +111,7 @@ public partial class App : Application
 
             if (running) return;
 
-            Thread.Sleep(interval);
+            await Task.Delay(interval);
             elapsed += interval;
         }
 

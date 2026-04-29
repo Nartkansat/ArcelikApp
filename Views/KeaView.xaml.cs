@@ -3,6 +3,7 @@ using ArcelikApp.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -25,21 +26,24 @@ namespace ArcelikExcelApp.Views
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadData();
+            _ = LoadDataAsync();
             // Sayfa yüklendiğinde Ctrl+F dinleyebilmesi için odaklan
             this.Focus();
         }
 
-        private void LoadData()
+        private async Task LoadDataAsync()
         {
             try
             {
-                using var db = new AppDbContext();
-                // KEA kategorisindeki maliyetleri getir (en son hesaplananlar üstte)
-                _allData = db.CostCalculations
-                    .Where(c => c.SourceTable == "Kea")
-                    .OrderByDescending(c => c.Id)
-                    .ToList();
+                _allData = await Task.Run(() =>
+                {
+                    using var db = new AppDbContext();
+                    // KEA kategorisindeki maliyetleri getir (en son hesaplananlar üstte)
+                    return db.CostCalculations
+                        .Where(c => c.SourceTable == "Kea")
+                        .OrderByDescending(c => c.Id)
+                        .ToList();
+                });
 
                 FilterData();
             }

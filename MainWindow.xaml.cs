@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -13,6 +14,11 @@ namespace ArcelikExcelApp
     {
         private DispatcherTimer _notificationPollTimer;
         private System.Collections.Generic.HashSet<int> _notifiedIds = new();
+        
+        // Session kontrolünü cache'le — her tıklamada DB'ye gitmesin
+        private DateTime _lastSessionCheck = DateTime.MinValue;
+        private bool _lastSessionValid = true;
+        private static readonly TimeSpan SessionCheckInterval = TimeSpan.FromSeconds(30);
 
         public MainWindow()
         {
@@ -40,33 +46,34 @@ namespace ArcelikExcelApp
 
             // Subscribe to notification changes
             NotificationService.NotificationsChanged += (s, e) => {
-                Dispatcher.Invoke(() => RefreshNotifications());
+                Dispatcher.Invoke(() => _ = RefreshNotificationsAsync());
             };
             
             // Subscribe to Modern Dialog Service
             ModernDialogService.DialogRequested += ModernDialogService_DialogRequested;
             
-            RefreshNotifications();
+            _ = RefreshNotificationsAsync();
 
             // Set default view by simulating a click on the Dashboard button
             Nav_Click(BtnDashboard, null);
 
-            // Setup polling for new notifications
+            // Setup polling for new notifications (async)
             _notificationPollTimer = new DispatcherTimer();
-            _notificationPollTimer.Interval = TimeSpan.FromSeconds(10);
+            _notificationPollTimer.Interval = TimeSpan.FromSeconds(15);
             _notificationPollTimer.Tick += NotificationPollTimer_Tick;
             _notificationPollTimer.Start();
             
             // First run to mark existing as "already notified" so we don't spam on startup
-            InitNotificationCache();
+            _ = InitNotificationCacheAsync();
         }
 
 
-        private void InitNotificationCache()
+        private async Task InitNotificationCacheAsync()
         {
             if (AuthService.CurrentUser != null)
             {
-                var currentNotifications = NotificationService.GetUserNotifications(AuthService.CurrentUser.Id);
+                int userId = AuthService.CurrentUser.Id;
+                var currentNotifications = await Task.Run(() => NotificationService.GetUserNotifications(userId));
                 foreach (var n in currentNotifications)
                 {
                     _notifiedIds.Add(n.Id);
@@ -74,23 +81,31 @@ namespace ArcelikExcelApp
             }
         }
 
-        private void NotificationPollTimer_Tick(object? sender, EventArgs e)
+        private async void NotificationPollTimer_Tick(object? sender, EventArgs e)
         {
             if (AuthService.CurrentUser == null) return;
 
-            var unread = NotificationService.GetUserNotifications(AuthService.CurrentUser.Id)
-                .Where(n => !n.IsRead && !_notifiedIds.Contains(n.Id))
-                .ToList();
-
-            if (unread.Any())
+            try
             {
-                foreach (var n in unread)
+                int userId = AuthService.CurrentUser.Id;
+                var notifiedIdsCopy = new System.Collections.Generic.HashSet<int>(_notifiedIds);
+                
+                var unread = await Task.Run(() => 
+                    NotificationService.GetUserNotifications(userId)
+                        .Where(n => !n.IsRead && !notifiedIdsCopy.Contains(n.Id))
+                        .ToList());
+
+                if (unread.Any())
                 {
-                    _notifiedIds.Add(n.Id);
-                    NotificationService.ShowToast(n.Title, n.Message, n.Type);
+                    foreach (var n in unread)
+                    {
+                        _notifiedIds.Add(n.Id);
+                        NotificationService.ShowToast(n.Title, n.Message, n.Type);
+                    }
+                    await RefreshNotificationsAsync();
                 }
-                RefreshNotifications();
             }
+            catch { /* Ağ hatası olursa sessizce devam et */ }
         }
 
         #region Modern Dialog System
@@ -156,16 +171,25 @@ namespace ArcelikExcelApp
         #endregion
 
         #region Notifications
-        private void RefreshNotifications()
+        private async Task RefreshNotificationsAsync()
         {
             if (AuthService.CurrentUser == null) return;
             
-            int userId = AuthService.CurrentUser.Id;
-            var list = NotificationService.GetUserNotifications(userId);
-            var unreadCount = NotificationService.GetUnreadCount(userId);
+            try
+            {
+                int userId = AuthService.CurrentUser.Id;
+                
+                var result = await Task.Run(() =>
+                {
+                    var list = NotificationService.GetUserNotifications(userId);
+                    var unreadCount = NotificationService.GetUnreadCount(userId);
+                    return (list, unreadCount);
+                });
 
-            BadgeNotifications.Badge = unreadCount > 0 ? (object)unreadCount : null;
-            ItemsNotifications.ItemsSource = list.Take(5);
+                BadgeNotifications.Badge = result.unreadCount > 0 ? (object)result.unreadCount : null;
+                ItemsNotifications.ItemsSource = result.list.Take(5);
+            }
+            catch { /* Ağ hatası olursa UI'ı çökertme */ }
         }
 
         private void BtnNotifications_Click(object sender, RoutedEventArgs e)
@@ -177,7 +201,8 @@ namespace ArcelikExcelApp
         {
             if (AuthService.CurrentUser != null)
             {
-                NotificationService.MarkAllAsRead(AuthService.CurrentUser.Id);
+                int userId = AuthService.CurrentUser.Id;
+                _ = Task.Run(() => NotificationService.MarkAllAsRead(userId));
                 MainSnackbar.MessageQueue?.Enqueue("Tüm bildirimler okundu olarak işaretlendi.");
             }
         }
@@ -186,23 +211,26 @@ namespace ArcelikExcelApp
         {
             if (sender is Button btn && btn.Tag is int id)
             {
-                NotificationService.MarkAsRead(id);
+                _ = Task.Run(() => NotificationService.MarkAsRead(id));
                 PopupNotifications.IsOpen = false;
                 
-                using var db = new ArcelikApp.Data.AppDbContext();
-                var notification = db.Notifications.Find(id);
-                if (notification != null)
+                _ = Task.Run(() =>
                 {
-                    var type = notification.Type switch
+                    using var db = new ArcelikApp.Data.AppDbContext();
+                    var notification = db.Notifications.Find(id);
+                    if (notification != null)
                     {
-                        "Success" => ModernDialogType.Success,
-                        "Warning" => ModernDialogType.Warning,
-                        "Error" => ModernDialogType.Error,
-                        _ => ModernDialogType.Info
-                    };
+                        var type = notification.Type switch
+                        {
+                            "Success" => ModernDialogType.Success,
+                            "Warning" => ModernDialogType.Warning,
+                            "Error" => ModernDialogType.Error,
+                            _ => ModernDialogType.Info
+                        };
 
-                    _ = ModernDialogService.ShowAsync(notification.Title, notification.Message, type);
-                }
+                        Dispatcher.Invoke(() => _ = ModernDialogService.ShowAsync(notification.Title, notification.Message, type));
+                    }
+                });
             }
         }
 
@@ -231,9 +259,23 @@ namespace ArcelikExcelApp
             }
         }
 
-        private void Nav_Click(object sender, RoutedEventArgs e)
+        private async void Nav_Click(object sender, RoutedEventArgs e)
         {
-            if (!AuthService.IsSessionValid())
+            // Session kontrolünü cache'le — her tıklamada DB'ye gitmesin
+            if (DateTime.Now - _lastSessionCheck > SessionCheckInterval)
+            {
+                try
+                {
+                    _lastSessionValid = await Task.Run(() => AuthService.IsSessionValid());
+                    _lastSessionCheck = DateTime.Now;
+                }
+                catch
+                {
+                    // Ağ hatası — son durumu koru
+                }
+            }
+
+            if (!_lastSessionValid)
             {
                 _ = ModernDialogService.ShowAsync("Oturum Hatası", "Oturumunuz sonlandırıldı. Başka bir cihazdan giriş yapılmış olabilir.", ModernDialogType.Error);
                 BtnLogout_Click(null, null);
@@ -300,7 +342,7 @@ namespace ArcelikExcelApp
 
         private void BtnLogout_Click(object sender, RoutedEventArgs e)
         {
-            AuthService.Logout();
+            _ = Task.Run(() => AuthService.Logout());
             LoginWindow login = new LoginWindow();
             login.Visibility = Visibility.Visible;
             login.Show();
@@ -308,4 +350,4 @@ namespace ArcelikExcelApp
         }
         #endregion
     }
-}
+}

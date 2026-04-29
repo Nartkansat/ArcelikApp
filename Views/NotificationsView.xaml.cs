@@ -1,4 +1,5 @@
 using ArcelikApp.Services;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -13,24 +14,29 @@ namespace ArcelikExcelApp.Views
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadNotifications();
+            _ = LoadNotificationsAsync();
         }
 
-        private void LoadNotifications()
+        private async Task LoadNotificationsAsync()
         {
             if (AuthService.CurrentUser == null) return;
             
-            var list = NotificationService.GetUserNotifications(AuthService.CurrentUser.Id);
-            GridNotifications.ItemsSource = list;
-            EmptyState.Visibility = list.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            try
+            {
+                int userId = AuthService.CurrentUser.Id;
+                var list = await Task.Run(() => NotificationService.GetUserNotifications(userId));
+                GridNotifications.ItemsSource = list;
+                EmptyState.Visibility = list.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+            }
+            catch { }
         }
 
-        private void BtnMarkRead_Click(object sender, RoutedEventArgs e)
+        private async void BtnMarkRead_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
             {
-                NotificationService.MarkAsRead(id);
-                LoadNotifications();
+                await Task.Run(() => NotificationService.MarkAsRead(id));
+                await LoadNotificationsAsync();
             }
         }
 
@@ -44,21 +50,25 @@ namespace ArcelikExcelApp.Views
 
                 if (result)
                 {
-                    NotificationService.MarkAllAsRead(AuthService.CurrentUser.Id);
-                    LoadNotifications();
+                    int userId = AuthService.CurrentUser.Id;
+                    await Task.Run(() => NotificationService.MarkAllAsRead(userId));
+                    await LoadNotificationsAsync();
                     _ = ModernDialogService.ShowAsync("Başarılı", "Tüm bildirimler okundu olarak işaretlendi.", ModernDialogType.Success);
                 }
             }
         }
 
-        private void BtnShowDetail_Click(object sender, RoutedEventArgs e)
+        private async void BtnShowDetail_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button btn && btn.Tag is int id)
             {
-                NotificationService.MarkAsRead(id);
+                var notification = await Task.Run(() =>
+                {
+                    NotificationService.MarkAsRead(id);
+                    using var db = new ArcelikApp.Data.AppDbContext();
+                    return db.Notifications.Find(id);
+                });
                 
-                using var db = new ArcelikApp.Data.AppDbContext();
-                var notification = db.Notifications.Find(id);
                 if (notification != null)
                 {
                     TxtDetailTitle.Text = notification.Title;
@@ -92,7 +102,7 @@ namespace ArcelikExcelApp.Views
 
                     NotificationDetailOverlay.Visibility = Visibility.Visible;
                 }
-                LoadNotifications();
+                await LoadNotificationsAsync();
             }
         }
 
@@ -108,8 +118,8 @@ namespace ArcelikExcelApp.Views
                 var result = await ModernDialogService.ShowAsync("Bildirim Sil", "Bu bildirimi silmek istediğinize emin misiniz?", ModernDialogType.Question);
                 if (result)
                 {
-                    NotificationService.DeleteNotification(id);
-                    LoadNotifications();
+                    await Task.Run(() => NotificationService.DeleteNotification(id));
+                    await LoadNotificationsAsync();
                 }
             }
         }
@@ -121,8 +131,9 @@ namespace ArcelikExcelApp.Views
                 var result = await ModernDialogService.ShowAsync("Tümünü Sil", "Tüm bildirimlerinizi silmek istediğinize emin misiniz? Bu işlem geri alınamaz.", ModernDialogType.Question);
                 if (result)
                 {
-                    NotificationService.DeleteAllNotifications(AuthService.CurrentUser.Id);
-                    LoadNotifications();
+                    int userId = AuthService.CurrentUser.Id;
+                    await Task.Run(() => NotificationService.DeleteAllNotifications(userId));
+                    await LoadNotificationsAsync();
                 }
             }
         }

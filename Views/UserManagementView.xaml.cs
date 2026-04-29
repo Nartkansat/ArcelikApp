@@ -2,7 +2,9 @@ using ArcelikApp.Data;
 using ArcelikApp.Models;
 using ArcelikApp.Services;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -38,15 +40,19 @@ namespace ArcelikExcelApp.Views
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadUsers();
+            _ = LoadUsersAsync();
         }
 
-        private void LoadUsers()
+        private async Task LoadUsersAsync()
         {
             try
             {
-                using var db = new AppDbContext();
-                var users = db.Users.ToList();
+                var users = await Task.Run(() =>
+                {
+                    using var db = new AppDbContext();
+                    return db.Users.ToList();
+                });
+                
                 GridUsers.ItemsSource = users;
 
                 // Populate notification user dropdown
@@ -82,7 +88,7 @@ namespace ArcelikExcelApp.Views
             NotificationDialogOverlay.Visibility = Visibility.Collapsed;
         }
 
-        private void BtnSendNotification_Click(object sender, RoutedEventArgs e)
+        private async void BtnSendNotification_Click(object sender, RoutedEventArgs e)
         {
             string title = TxtNotifyTitle.Text.Trim();
             string message = TxtNotifyMessage.Text.Trim();
@@ -99,25 +105,24 @@ namespace ArcelikExcelApp.Views
             try
             {
                 string type = selectedType?.Tag?.ToString() ?? "Info";
-                ModernDialogType dialogType = type == "Success" ? ModernDialogType.Success : 
-                                            type == "Warning" ? ModernDialogType.Warning : 
-                                            type == "Error" ? ModernDialogType.Error : ModernDialogType.Info;
-
                 string tag = selectedItem?.Tag?.ToString() ?? "";
                 
-                if (tag == "All")
+                await Task.Run(() =>
                 {
-                    NotificationService.SendToAll(title, message, type);
-                }
-                else if (tag.StartsWith("Role:"))
-                {
-                    string role = tag.Substring(5);
-                    NotificationService.SendToRole(role, title, message, type);
-                }
-                else if (int.TryParse(tag, out int userId))
-                {
-                    NotificationService.SendNotification(userId, title, message, type);
-                }
+                    if (tag == "All")
+                    {
+                        NotificationService.SendToAll(title, message, type);
+                    }
+                    else if (tag.StartsWith("Role:"))
+                    {
+                        string role = tag.Substring(5);
+                        NotificationService.SendToRole(role, title, message, type);
+                    }
+                    else if (int.TryParse(tag, out int userId))
+                    {
+                        NotificationService.SendNotification(userId, title, message, type);
+                    }
+                });
 
                 NotificationDialogOverlay.Visibility = Visibility.Collapsed;
                 _ = ModernDialogService.ShowAsync("Başarılı", "Bildirim başarıyla gönderildi.", ModernDialogType.Success);
@@ -155,12 +160,13 @@ namespace ArcelikExcelApp.Views
             }
         }
 
-        private void BtnSaveUser_Click(object sender, RoutedEventArgs e)
+        private async void BtnSaveUser_Click(object sender, RoutedEventArgs e)
         {
             string username = TxtNewUsername.Text.Trim();
             string password = TxtNewPassword.Password;
             string role = (CmbRole.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "User";
             string license = TxtNewLicenseKey.Text.Trim();
+            int? editingUserId = _editingUser?.Id;
 
             if (string.IsNullOrEmpty(username))
             {
@@ -176,50 +182,53 @@ namespace ArcelikExcelApp.Views
 
             try
             {
-                using var db = new AppDbContext();
-                if (_editingUser == null)
+                string? errorMsg = await Task.Run(() =>
                 {
-                    // Yeni kullanıcı
-                    if (db.Users.Any(u => u.Username == username))
+                    using var db = new AppDbContext();
+                    if (editingUserId == null)
                     {
-                        ShowUserError("Bu kullanıcı adı zaten alınmış.");
-                        return;
-                    }
+                        // Yeni kullanıcı
+                        if (db.Users.Any(u => u.Username == username))
+                            return "Bu kullanıcı adı zaten alınmış.";
 
-                    var newUser = new User
-                    {
-                        Username = username,
-                        PasswordHash = SecurityHelper.HashPassword(password),
-                        Role = role,
-                        LicenseKey = license,
-                        IsActive = true
-                    };
-                    db.Users.Add(newUser);
-                }
-                else
-                {
-                    // Düzenle
-                    var user = db.Users.Find(_editingUser.Id);
-                    if (user != null)
-                    {
-                        // Check if username changed and is already taken
-                        if (user.Username != username && db.Users.Any(u => u.Username == username))
+                        var newUser = new User
                         {
-                            ShowUserError("Bu kullanıcı adı zaten alınmış.");
-                            return;
-                        }
-
-                        user.Username = username;
-                        if (!string.IsNullOrEmpty(password))
-                            user.PasswordHash = SecurityHelper.HashPassword(password);
-                        user.Role = role;
-                        user.LicenseKey = license;
+                            Username = username,
+                            PasswordHash = SecurityHelper.HashPassword(password),
+                            Role = role,
+                            LicenseKey = license,
+                            IsActive = true
+                        };
+                        db.Users.Add(newUser);
                     }
+                    else
+                    {
+                        // Düzenle
+                        var user = db.Users.Find(editingUserId);
+                        if (user != null)
+                        {
+                            if (user.Username != username && db.Users.Any(u => u.Username == username))
+                                return "Bu kullanıcı adı zaten alınmış.";
+
+                            user.Username = username;
+                            if (!string.IsNullOrEmpty(password))
+                                user.PasswordHash = SecurityHelper.HashPassword(password);
+                            user.Role = role;
+                            user.LicenseKey = license;
+                        }
+                    }
+                    db.SaveChanges();
+                    return null;
+                });
+
+                if (errorMsg != null)
+                {
+                    ShowUserError(errorMsg);
+                    return;
                 }
 
-                db.SaveChanges();
                 DialogOverlay.Visibility = Visibility.Collapsed;
-                LoadUsers();
+                await LoadUsersAsync();
             }
             catch (Exception ex)
             {
@@ -244,15 +253,20 @@ namespace ArcelikExcelApp.Views
             {
                 try
                 {
-                    using var db = new AppDbContext();
-                    var dbUser = db.Users.Find(user.Id);
-                    if (dbUser != null)
+                    int userId = user.Id;
+                    string userName = user.Username;
+                    await Task.Run(() =>
                     {
-                        dbUser.CurrentSessionId = null;
-                        db.SaveChanges();
-                        _ = ModernDialogService.ShowAsync("Başarılı", $"{user.Username} kullanıcısının oturumu sıfırlandı.", ModernDialogType.Success);
-                        LoadUsers();
-                    }
+                        using var db = new AppDbContext();
+                        var dbUser = db.Users.Find(userId);
+                        if (dbUser != null)
+                        {
+                            dbUser.CurrentSessionId = null;
+                            db.SaveChanges();
+                        }
+                    });
+                    _ = ModernDialogService.ShowAsync("Başarılı", $"{userName} kullanıcısının oturumu sıfırlandı.", ModernDialogType.Success);
+                    await LoadUsersAsync();
                 }
                 catch (Exception ex)
                 {
@@ -271,16 +285,20 @@ namespace ArcelikExcelApp.Views
                 {
                     try
                     {
-                        using var db = new AppDbContext();
-                        var dbUser = db.Users.Find(user.Id);
-                        if (dbUser != null)
+                        int userId = user.Id;
+                        await Task.Run(() =>
                         {
-                            dbUser.DeviceId = null;
-                            dbUser.IsActivated = false;
-                            db.SaveChanges();
-                            _ = ModernDialogService.ShowAsync("Başarılı", "Cihaz kilidi başarıyla kaldırıldı.", ModernDialogType.Success);
-                            LoadUsers();
-                        }
+                            using var db = new AppDbContext();
+                            var dbUser = db.Users.Find(userId);
+                            if (dbUser != null)
+                            {
+                                dbUser.DeviceId = null;
+                                dbUser.IsActivated = false;
+                                db.SaveChanges();
+                            }
+                        });
+                        _ = ModernDialogService.ShowAsync("Başarılı", "Cihaz kilidi başarıyla kaldırıldı.", ModernDialogType.Success);
+                        await LoadUsersAsync();
                     }
                     catch (Exception ex)
                     {

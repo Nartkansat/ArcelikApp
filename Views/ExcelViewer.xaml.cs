@@ -25,7 +25,7 @@ namespace ArcelikExcelApp.Views
         {
             InitializeComponent();
             ExcelPackage.License.SetNonCommercialPersonal("NART");
-            LoadFilesFromDb();
+            _ = LoadFilesFromDbAsync();
         }
 
         public void LoadSpecificFile(int fileId)
@@ -37,12 +37,15 @@ namespace ArcelikExcelApp.Views
             }
         }
 
-        private void LoadFilesFromDb()
+        private async Task LoadFilesFromDbAsync()
         {
             try
             {
-                using var db = new AppDbContext();
-                _allFiles = db.UploadedFiles.OrderByDescending(x => x.Id).ToList();
+                _allFiles = await Task.Run(() =>
+                {
+                    using var db = new AppDbContext();
+                    return db.UploadedFiles.OrderByDescending(x => x.Id).ToList();
+                });
                 ListFiles.ItemsSource = _allFiles;
             }
             catch (Exception ex)

@@ -1,6 +1,7 @@
 using ArcelikApp.Data;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -15,89 +16,86 @@ namespace ArcelikExcelApp.Views
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadDashboardData();
+            _ = LoadDashboardDataAsync();
         }
 
-        private void LoadDashboardData()
+        private async Task LoadDashboardDataAsync()
         {
             try
             {
-                using var db = new AppDbContext();
-
-                // 1. Temel Sayısal Veriler
-                int keaCount = db.KeaProducts.Count();
-                int wgCount = db.WhiteGoodsProducts.Count();
-                int totalProducts = keaCount + wgCount;
-                
-                int totalCampaigns = db.OlizCampaigns.Count();
-                int totalCalculations = db.CostCalculations.Count();
-                int totalFiles = db.UploadedFiles.Count();
-
-                TxtTotalProducts.Text = totalProducts.ToString("N0");
-                TxtKeaCount.Text = keaCount.ToString("N0");
-                TxtWgCount.Text = wgCount.ToString("N0");
-                TxtTotalFiles.Text = totalFiles.ToString("N0");
-                TxtTotalCampaigns.Text = totalCampaigns.ToString("N0");
-                TxtTotalCalculations.Text = $"Toplam: {totalCalculations:N0}";
-
-                // 2. Ortalama Fiyat Analizleri
-                decimal keaAvg = 0;
-                if (keaCount > 0)
+                var data = await Task.Run(() =>
                 {
-                    // Boş olmayan WholesalePrice60 değerlerinin ortalaması
-                    keaAvg = db.KeaProducts.Where(x => x.WholesalePrice60 > 0).Average(x => (decimal?)x.WholesalePrice60) ?? 0;
-                }
-                
-                decimal wgAvg = 0;
-                if (wgCount > 0)
-                {
-                    wgAvg = db.WhiteGoodsProducts.Where(x => x.WholesalePrice60 > 0).Average(x => (decimal?)x.WholesalePrice60) ?? 0;
-                }
+                    using var db = new AppDbContext();
 
-                TxtKeaAvgPrice.Text = $"{keaAvg:N0} ₺";
-                TxtWgAvgPrice.Text = $"{wgAvg:N0} ₺";
+                    // 1. Temel Sayısal Veriler
+                    int keaCount = db.KeaProducts.Count();
+                    int wgCount = db.WhiteGoodsProducts.Count();
+                    int totalProducts = keaCount + wgCount;
+                    
+                    int totalCampaigns = db.OlizCampaigns.Count();
+                    int totalCalculations = db.CostCalculations.Count();
+                    int totalFiles = db.UploadedFiles.Count();
 
-                // 3. Kampanya Kullanım Oranı
-                if (totalCalculations > 0)
-                {
-                    int campaignAppliedCount = db.CostCalculations.Count(x => x.PriceConversion > 0);
-                    double ratio = ((double)campaignAppliedCount / totalCalculations) * 100;
-                    TxtCampaignRatio.Text = $"%{ratio:F1}";
-                    ProgCampaign.Value = ratio;
-                }
-                else
-                {
-                    TxtCampaignRatio.Text = "%0";
-                    ProgCampaign.Value = 0;
-                }
+                    // 2. Ortalama Fiyat Analizleri
+                    decimal keaAvg = 0;
+                    if (keaCount > 0)
+                    {
+                        keaAvg = db.KeaProducts.Where(x => x.WholesalePrice60 > 0).Average(x => (decimal?)x.WholesalePrice60) ?? 0;
+                    }
+                    
+                    decimal wgAvg = 0;
+                    if (wgCount > 0)
+                    {
+                        wgAvg = db.WhiteGoodsProducts.Where(x => x.WholesalePrice60 > 0).Average(x => (decimal?)x.WholesalePrice60) ?? 0;
+                    }
 
-                // 4. Kategori Dağılımı
-                if (totalProducts > 0)
-                {
-                    double keaRatio = ((double)keaCount / totalProducts) * 100;
-                    double wgRatio = ((double)wgCount / totalProducts) * 100;
+                    // 3. Kampanya Kullanım Oranı
+                    int campaignAppliedCount = 0;
+                    double campaignRatio = 0;
+                    if (totalCalculations > 0)
+                    {
+                        campaignAppliedCount = db.CostCalculations.Count(x => x.PriceConversion > 0);
+                        campaignRatio = ((double)campaignAppliedCount / totalCalculations) * 100;
+                    }
 
-                    TxtKeaRatio.Text = $"%{keaRatio:F1}";
-                    ProgKea.Value = keaRatio;
+                    // 4. Kategori Dağılımı
+                    double keaRatio = totalProducts > 0 ? ((double)keaCount / totalProducts) * 100 : 0;
+                    double wgRatio = totalProducts > 0 ? ((double)wgCount / totalProducts) * 100 : 0;
 
-                    TxtWgRatio.Text = $"%{wgRatio:F1}";
-                    ProgWg.Value = wgRatio;
-                }
-                else
-                {
-                    TxtKeaRatio.Text = "%0";
-                    ProgKea.Value = 0;
-                    TxtWgRatio.Text = "%0";
-                    ProgWg.Value = 0;
-                }
+                    // 5. Son Yapılan Hesaplamalar (DataGrid)
+                    var recentCalculations = db.CostCalculations
+                                               .OrderByDescending(x => x.Id)
+                                               .Take(15)
+                                               .ToList();
 
-                // 5. Son Yapılan Hesaplamalar (DataGrid)
-                var recentCalculations = db.CostCalculations
-                                           .OrderByDescending(x => x.Id)
-                                           .Take(15)
-                                           .ToList();
-                                           
-                GridRecentCalculations.ItemsSource = recentCalculations;
+                    return new
+                    {
+                        keaCount, wgCount, totalProducts, totalCampaigns, totalCalculations, totalFiles,
+                        keaAvg, wgAvg, campaignRatio, keaRatio, wgRatio, recentCalculations
+                    };
+                });
+
+                // UI güncellemelerini ana thread'de yap
+                TxtTotalProducts.Text = data.totalProducts.ToString("N0");
+                TxtKeaCount.Text = data.keaCount.ToString("N0");
+                TxtWgCount.Text = data.wgCount.ToString("N0");
+                TxtTotalFiles.Text = data.totalFiles.ToString("N0");
+                TxtTotalCampaigns.Text = data.totalCampaigns.ToString("N0");
+                TxtTotalCalculations.Text = $"Toplam: {data.totalCalculations:N0}";
+
+                TxtKeaAvgPrice.Text = $"{data.keaAvg:N0} ₺";
+                TxtWgAvgPrice.Text = $"{data.wgAvg:N0} ₺";
+
+                TxtCampaignRatio.Text = $"%{data.campaignRatio:F1}";
+                ProgCampaign.Value = data.campaignRatio;
+
+                TxtKeaRatio.Text = $"%{data.keaRatio:F1}";
+                ProgKea.Value = data.keaRatio;
+
+                TxtWgRatio.Text = $"%{data.wgRatio:F1}";
+                ProgWg.Value = data.wgRatio;
+
+                GridRecentCalculations.ItemsSource = data.recentCalculations;
             }
             catch (Exception ex)
             {
@@ -106,3 +104,4 @@ namespace ArcelikExcelApp.Views
         }
     }
 }
+

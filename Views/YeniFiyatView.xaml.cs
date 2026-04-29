@@ -60,22 +60,25 @@ namespace ArcelikExcelApp.Views
         // -------------------------------------------------------------------
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadOlizFiles();
-            LoadProductFiles("KEA"); // varsayılan kategori
+            _ = LoadOlizFilesAsync();
+            _ = LoadProductFilesAsync("KEA"); // varsayılan kategori
         }
 
         // -------------------------------------------------------------------
         // Oliz dosyalarını yükle
         // -------------------------------------------------------------------
-        private void LoadOlizFiles()
+        private async Task LoadOlizFilesAsync()
         {
             try
             {
-                using var db = new AppDbContext();
-                var olizFiles = db.UploadedFiles
-                    .Where(f => f.Category == "Oliz Kampanya")
-                    .OrderByDescending(f => f.Id)
-                    .ToList();
+                var olizFiles = await Task.Run(() =>
+                {
+                    using var db = new AppDbContext();
+                    return db.UploadedFiles
+                        .Where(f => f.Category == "Oliz Kampanya")
+                        .OrderByDescending(f => f.Id)
+                        .ToList();
+                });
 
                 CmbOlizFile.ItemsSource = olizFiles;
                 if (olizFiles.Any())
@@ -90,34 +93,36 @@ namespace ArcelikExcelApp.Views
         // -------------------------------------------------------------------
         // Ürün dosyalarını kategoriye göre yükle
         // -------------------------------------------------------------------
-        private void LoadProductFiles(string category)
+        private async Task LoadProductFilesAsync(string category)
         {
             try
             {
-                using var db = new AppDbContext();
-                List<UploadedFile> files;
-
-                if (category == "Tümü")
+                var files = await Task.Run(() =>
                 {
-                    files = db.UploadedFiles
-                        .Where(f => f.Category == "Kea" || f.Category == "BeyazEsya" || f.Category == "Beyaz Eşya")
-                        .OrderByDescending(f => f.Id)
-                        .ToList();
-                }
-                else if (category == "Beyaz Eşya")
-                {
-                    files = db.UploadedFiles
-                        .Where(f => f.Category == "BeyazEsya" || f.Category == "Beyaz Eşya")
-                        .OrderByDescending(f => f.Id)
-                        .ToList();
-                }
-                else // KEA
-                {
-                    files = db.UploadedFiles
-                        .Where(f => f.Category == "Kea")
-                        .OrderByDescending(f => f.Id)
-                        .ToList();
-                }
+                    using var db = new AppDbContext();
+                    
+                    if (category == "Tümü")
+                    {
+                        return db.UploadedFiles
+                            .Where(f => f.Category == "Kea" || f.Category == "BeyazEsya" || f.Category == "Beyaz Eşya")
+                            .OrderByDescending(f => f.Id)
+                            .ToList();
+                    }
+                    else if (category == "Beyaz Eşya")
+                    {
+                        return db.UploadedFiles
+                            .Where(f => f.Category == "BeyazEsya" || f.Category == "Beyaz Eşya")
+                            .OrderByDescending(f => f.Id)
+                            .ToList();
+                    }
+                    else // KEA
+                    {
+                        return db.UploadedFiles
+                            .Where(f => f.Category == "Kea")
+                            .OrderByDescending(f => f.Id)
+                            .ToList();
+                    }
+                });
 
                 _allProductFiles = files.Select(f => new FileSelectionWrapper { File = f, IsSelected = true }).ToList();
                 UpdateProductFilesList();
@@ -175,7 +180,7 @@ namespace ArcelikExcelApp.Views
         private void CmbCategory_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (CmbCategory?.SelectedItem is ComboBoxItem item)
-                LoadProductFiles(item.Content?.ToString() ?? "KEA");
+                _ = LoadProductFilesAsync(item.Content?.ToString() ?? "KEA");
         }
 
         // -------------------------------------------------------------------
