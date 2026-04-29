@@ -79,7 +79,7 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add update.xml
-        git commit -m "Update update.xml to version ${{ github.ref_name }}"
-        git push origin main # Not: main branch adınız farklıysa güncelleyin
+        git commit -m "Update update.xml to version ${{ github.ref_name }}" || echo "No changes to commit"
+        git push origin HEAD:main # HEAD'deki değişikliği main dalına zorla gönderir
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
