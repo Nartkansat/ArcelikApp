@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <item>
-    <version>0.0.0</version>
-    <url>https://github.com/nartkansat/ArcelikApp/releases/download/v0.0.0/update.zip</url>
-    <changelog>https://github.com/nartkansat/ArcelikApp/releases/tag/v0.0.0</changelog>
+    <version>0.0.2</version>
+    <url>https://github.com/Nartkansat/ArcelikApp/releases/download/v0.0.2/update.zip</url>
+    <changelog>https://github.com/Nartkansat/ArcelikApp/releases/tag/v0.0.2</changelog>
     <mandatory>true</mandatory>
 </item>
