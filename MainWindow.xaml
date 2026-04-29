@@ -101,7 +101,7 @@
                     <Button x:Name="BtnExcelViewer" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="ExcelViewer">
                         <StackPanel Orientation="Horizontal">
                             <materialDesign:PackIcon Kind="MicrosoftExcel" Width="22" Height="22" Margin="0,0,15,0"/>
-                            <TextBlock Text="Excel Görüntüleyici" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
+                            <TextBlock Text="Excel Görüntüle222222yici" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
                         </StackPanel>
                     </Button>
 
