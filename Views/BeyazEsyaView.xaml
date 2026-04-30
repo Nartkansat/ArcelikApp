@@ -83,7 +83,7 @@
                             </Style>
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="Kart Fiyatı" Binding="{Binding CardPurchasePrice, StringFormat={}{0:N2} ₺}" Width="120">
+                    <DataGridTextColumn x:Name="ColCardPrice"  Binding="{Binding CardPurchasePrice, StringFormat={}{0:N2} ₺}" Width="140">
                         <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="FontWeight" Value="SemiBold"/>

@@ -20,6 +20,7 @@ namespace ArcelikExcelApp.Views
     public partial class ExcelViewer : UserControl
     {
         private List<UploadedFile> _allFiles = new();
+        private int? _pendingFileIdToLoad = null;
 
         public ExcelViewer()
         {
@@ -30,10 +31,20 @@ namespace ArcelikExcelApp.Views
 
         public void LoadSpecificFile(int fileId)
         {
-            var file = _allFiles.FirstOrDefault(x => x.Id == fileId);
-            if (file != null)
+            // Eğer dosyalar veritabanından çoktan geldiyse direkt seç:
+            if (_allFiles != null && _allFiles.Any())
             {
-                ListFiles.SelectedItem = file;
+                var file = _allFiles.FirstOrDefault(x => x.Id == fileId);
+                if (file != null)
+                {
+                    ListFiles.SelectedItem = file;
+                }
+            }
+            else
+            {
+                // Dosyalar henüz yüklenmediyse (arka planda yüklenmeye devam ediyorsa), 
+                // ID'yi hafızaya al. Yükleme bitince otomatik seçeceğiz.
+                _pendingFileIdToLoad = fileId;
             }
         }
 
@@ -47,6 +58,20 @@ namespace ArcelikExcelApp.Views
                     return db.UploadedFiles.OrderByDescending(x => x.Id).ToList();
                 });
                 ListFiles.ItemsSource = _allFiles;
+
+                // --- YENİ EKLENEN KISIM ---
+                // Liste UI'a bağlandı. Dışarıdan gelip de bekleyen bir dosya açma isteği var mı kontrol et:
+                if (_pendingFileIdToLoad.HasValue)
+                {
+                    var fileToSelect = _allFiles.FirstOrDefault(x => x.Id == _pendingFileIdToLoad.Value);
+                    if (fileToSelect != null)
+                    {
+                        // Bunu seçtiğimiz an ListFiles_SelectionChanged tetiklenecek ve sağ taraf dolacak.
+                        ListFiles.SelectedItem = fileToSelect;
+                    }
+                    _pendingFileIdToLoad = null; // İşlem bitti, bekleyen id'yi sıfırla.
+                }
+
             }
             catch (Exception ex)
             {
@@ -153,6 +178,13 @@ namespace ArcelikExcelApp.Views
                 {
                     TabWorksheets.SelectedIndex = 0;
                     PnlExcelToolbar.Visibility = Visibility.Visible;
+
+                    // Açılan dosyanın adını ekrana yazdırıyoruz
+                    Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        TxtCurrentFileName.Text = fileName;
+                        TxtCurrentFileName.ToolTip = fileName; // Uzun isimler için üzerine gelince tam adını göstersin
+                    });
                 }
             }
             catch (Exception ex)

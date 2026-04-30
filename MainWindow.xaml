@@ -15,19 +15,22 @@
         <converters:BooleanToReadBackgroundConverter x:Key="BooleanToReadBackgroundConverter"/>
         <converters:NotificationTypeToColorConverter x:Key="NotificationTypeToColorConverter"/>
         <converters:NotificationTypeToIconConverter x:Key="NotificationTypeToIconConverter"/>
-        
+
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
         <!-- Modern Sidebar Button Style -->
         <Style x:Key="PremiumNavButton" TargetType="Button">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="#A0A5B1"/>
             <Setter Property="Height" Value="55"/>
-            <Setter Property="Margin" Value="15,5,15,5"/>
+            <Setter Property="Margin" Value="10,5,10,5"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="12" Padding="20,0">
-                            <ContentPresenter HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                        <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="12" Padding="0">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
                             <Trigger Property="IsMouseOver" Value="True">
@@ -47,7 +50,7 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="280"/>
+            <ColumnDefinition x:Name="SidebarColumn" Width="280"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
@@ -64,83 +67,132 @@
                 </Grid.RowDefinitions>
 
                 <!-- Header / Logo -->
-                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="30,40,20,40">
-                    <Border Width="45" Height="45" Background="#E02020" CornerRadius="12">
+                <Grid Grid.Row="0" Margin="10,40,10,40">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="65"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Column="0" Width="45" Height="45" Background="#E02020" CornerRadius="12" HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Viewbox Width="28" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center">
                             <Path Data="{StaticResource ArcelikLogoGeometry}" Fill="White"/>
                         </Viewbox>
                     </Border>
-                    <TextBlock Text="Arçelik" FontSize="32" FontFamily="{StaticResource ArcelikFont}" FontWeight="Bold" Foreground="White" Margin="15,0,0,0" VerticalAlignment="Center"/>
-                </StackPanel>
+                    <!-- Sadece genişken yazıyı göster -->
+                    <TextBlock Grid.Column="1" Text="Arçelik" FontSize="32" FontFamily="{StaticResource ArcelikFont}" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"
+                               Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                </Grid>
 
                 <!-- Navigation -->
                 <StackPanel x:Name="MenuStackPanel" Grid.Row="1" Margin="0,10,0,0">
-                    <TextBlock Text="ANA MENÜ" Foreground="#666A7D" FontSize="12" FontWeight="SemiBold" Margin="35,0,0,15"/>
-                    
-                    <Button x:Name="BtnDashboard" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="Anasayfa">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="ViewDashboard" Width="22" Height="22" Margin="0,0,15,0"/>
-                            <TextBlock Text="Dashboard" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
-                        </StackPanel>
+                    <TextBlock Text="ANA MENÜ" Foreground="#666A7D" FontSize="12" FontWeight="SemiBold" Margin="25,0,0,15"
+                               Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <Button x:Name="BtnDashboard" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="Anasayfa" ToolTip="Dashboard">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="65"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="ViewDashboard" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="Dashboard" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"
+                                       Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        </Grid>
                     </Button>
 
-                    <Button Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="Kea">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="CoffeeMaker" Width="22" Height="22" Margin="0,0,15,0"/>
-                            <TextBlock Text="Küçük Ev Aletleri" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
-                        </StackPanel>
+                    <Button Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="Kea" ToolTip="Küçük Ev Aletleri">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="65"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="CoffeeMaker" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="Küçük Ev Aletleri" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"
+                                       Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        </Grid>
                     </Button>
 
-                    <Button Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="BeyazEsya">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="WashingMachine" Width="22" Height="22" Margin="0,0,15,0"/>
-                            <TextBlock Text="Beyaz Eşya" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
-                        </StackPanel>
+                    <Button Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="BeyazEsya" ToolTip="Beyaz Eşya">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="65"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="WashingMachine" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="Beyaz Eşya" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"
+                                       Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        </Grid>
                     </Button>
 
-                    <Button x:Name="BtnExcelViewer" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="ExcelViewer">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="MicrosoftExcel" Width="22" Height="22" Margin="0,0,15,0"/>
-                            <TextBlock Text="Excel Görüntüleyici" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
-                        </StackPanel>
+                    <Button x:Name="BtnExcelViewer" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="ExcelViewer" ToolTip="Excel Görüntüleyici">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="65"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="MicrosoftExcel" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="Excel Görüntüleyici" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"
+                                       Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        </Grid>
                     </Button>
 
                     <StackPanel x:Name="AdminSection">
-                        <TextBlock Text="İŞLEMLER" Foreground="#666A7D" FontSize="12" FontWeight="SemiBold" Margin="35,25,0,15"/>
+                        <TextBlock Text="İŞLEMLER" Foreground="#666A7D" FontSize="12" FontWeight="SemiBold" Margin="25,25,0,15"
+                                   Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                        <Button x:Name="BtnCalculator" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="YeniFiyat">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="CalculatorVariant" Width="22" Height="22" Margin="0,0,15,0"/>
-                                <TextBlock Text="Maliyet Hesaplama" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
-                            </StackPanel>
+                        <Button x:Name="BtnCalculator" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="YeniFiyat" ToolTip="Maliyet Hesaplama">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="65"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="CalculatorVariant" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="Maliyet Hesaplama" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"
+                                           Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </Grid>
                         </Button>
 
-                        <Button x:Name="BtnImportExcel" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="Excell">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="DatabaseImport" Width="22" Height="22" Margin="0,0,15,0"/>
-                                <TextBlock Text="Excel İçeri Aktar" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
-                            </StackPanel>
+                        <Button x:Name="BtnImportExcel" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="Excell" ToolTip="Excel İçeri Aktar">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="65"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="DatabaseImport" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="Excel İçeri Aktar" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"
+                                           Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </Grid>
                         </Button>
 
-                        <Button x:Name="BtnUserManagement" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="UserManagement">
-                            <StackPanel Orientation="Horizontal">
-                                <materialDesign:PackIcon Kind="AccountGroup" Width="22" Height="22" Margin="0,0,15,0"/>
-                                <TextBlock Text="Kullanıcı Yönetimi" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
-                            </StackPanel>
+                        <Button x:Name="BtnUserManagement" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="UserManagement" ToolTip="Kullanıcı Yönetimi">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="65"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="AccountGroup" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="Kullanıcı Yönetimi" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"
+                                           Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </Grid>
                         </Button>
                     </StackPanel>
 
-                    <TextBlock Text="KULLANICI" Foreground="#666A7D" FontSize="12" FontWeight="SemiBold" Margin="35,25,0,15"/>
-                    <Button x:Name="BtnSettingsSidebar" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="Settings">
-                        <StackPanel Orientation="Horizontal">
-                            <materialDesign:PackIcon Kind="CogOutline" Width="22" Height="22" Margin="0,0,15,0"/>
-                            <TextBlock Text="Ayarlar" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"/>
-                        </StackPanel>
+                    <TextBlock Text="KULLANICI" Foreground="#666A7D" FontSize="12" FontWeight="SemiBold" Margin="25,25,0,15"
+                               Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                    <Button x:Name="BtnSettingsSidebar" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="Settings" ToolTip="Ayarlar">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="65"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <materialDesign:PackIcon Grid.Column="0" Kind="CogOutline" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="Ayarlar" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"
+                                       Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        </Grid>
                     </Button>
                 </StackPanel>
-                
+
                 <!-- Footer Profile -->
-                <Border Grid.Row="2" Margin="20" Background="#232635" CornerRadius="12" Padding="15">
+                <Border Grid.Row="2" Margin="10,20,10,20" Background="#232635" CornerRadius="12" Padding="10">
                     <StackPanel>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -148,21 +200,23 @@
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" Background="#3A3F55">
+                            <Border Grid.Column="0" Width="40" Height="40" CornerRadius="20" Background="#3A3F55" HorizontalAlignment="Center" ToolTip="Profil">
                                 <materialDesign:PackIcon Kind="AccountTie" Width="24" Height="24" Foreground="White" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center">
+                            <StackPanel Grid.Column="1" Margin="15,0,0,0" VerticalAlignment="Center"
+                                        Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <TextBlock x:Name="TxtUsername" Text="Yönetici" Foreground="White" FontSize="14" FontWeight="SemiBold"/>
                                 <TextBlock x:Name="TxtRole" Text="Admin" Foreground="#4CAF50" FontSize="12"/>
                             </StackPanel>
                             <Button Grid.Column="2" Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}" 
                                     Width="30" Height="30" Background="Transparent" BorderBrush="Transparent"
-                                    Click="BtnLogout_Click">
+                                    Click="BtnLogout_Click" ToolTip="Çıkış Yap"
+                                    Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}">
                                 <materialDesign:PackIcon Kind="Logout" Foreground="#EF5350" Width="18" Height="18"/>
                             </Button>
                         </Grid>
-                        <!-- Uygulama Versiyonu -->
-                        <TextBlock x:Name="TxtAppVersion" Text="v1.0.8" Foreground="#666A7D" FontSize="11" HorizontalAlignment="Center" Margin="0,15,0,0"/>
+                        <TextBlock x:Name="TxtAppVersion" Text="v1.0.8" Foreground="#666A7D" FontSize="11" HorizontalAlignment="Center" Margin="0,15,0,0"
+                                   Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </StackPanel>
                 </Border>
             </Grid>
@@ -174,17 +228,24 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            
+
             <!-- Topbar -->
             <Grid Grid.Row="0" Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                
-                <TextBlock x:Name="TxtPageTitle" Text="Dashboard" FontSize="32" FontWeight="Bold" Foreground="#1A1A24" VerticalAlignment="Center"/>
-                
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+
+                <ToggleButton x:Name="MenuToggleButton" Grid.Column="0"
+                              Style="{StaticResource MaterialDesignHamburgerToggleButton}" 
+                              IsChecked="True" 
+                              Margin="0,0,20,0"
+                              Click="MenuToggleButton_Click"/>
+
+                <TextBlock Grid.Column="1" x:Name="TxtPageTitle" Text="Dashboard" FontSize="32" FontWeight="Bold" Foreground="#1A1A24" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Modern Notification Bell with Badge -->
                     <materialDesign:Badged x:Name="BadgeNotifications" Badge="0" BadgeBackground="Red" BadgeForeground="White" Margin="0,0,15,0">
                         <Button Style="{StaticResource MaterialDesignFloatingActionMiniLightButton}" 
@@ -192,7 +253,7 @@
                             <materialDesign:PackIcon Kind="BellOutline" Foreground="#666A7D" Width="20" Height="20"/>
                         </Button>
                     </materialDesign:Badged>
-                    
+
                     <!-- Notification Popup Panel -->
                     <Popup x:Name="PopupNotifications" AllowsTransparency="True" StaysOpen="False" 
                            Placement="Bottom" PlacementTarget="{Binding ElementName=BadgeNotifications}"
@@ -205,7 +266,7 @@
                                     <RowDefinition Height="*"/>
                                     <RowDefinition Height="Auto"/>
                                 </Grid.RowDefinitions>
-                                
+
                                 <Border Grid.Row="0" Padding="20,15" Background="#F8F9FB" CornerRadius="18,18,0,0">
                                     <Grid>
                                         <TextBlock Text="Bildirimler" FontSize="18" FontWeight="Bold" Foreground="#1A1A24" VerticalAlignment="Center"/>
@@ -214,7 +275,7 @@
                                                 FontSize="12" Click="BtnMarkAllRead_Click"/>
                                     </Grid>
                                 </Border>
-                                
+
                                 <ScrollViewer Grid.Row="1" MaxHeight="350" VerticalScrollBarVisibility="Auto">
                                     <ItemsControl x:Name="ItemsNotifications">
                                         <ItemsControl.ItemTemplate>
@@ -225,17 +286,17 @@
                                                             Background="{Binding IsRead, Converter={StaticResource BooleanToReadBackgroundConverter}}">
                                                         <Grid>
                                                             <Grid.ColumnDefinitions>
-                                                                 <ColumnDefinition Width="Auto"/>
-                                                                 <ColumnDefinition Width="*"/>
+                                                                <ColumnDefinition Width="Auto"/>
+                                                                <ColumnDefinition Width="*"/>
                                                             </Grid.ColumnDefinitions>
-                                                            
+
                                                             <Border Width="40" Height="40" CornerRadius="12" 
                                                                     Background="{Binding Type, Converter={StaticResource NotificationTypeToColorConverter}, ConverterParameter=Light}">
                                                                 <materialDesign:PackIcon Kind="{Binding Type, Converter={StaticResource NotificationTypeToIconConverter}}" 
-                                                                                       Foreground="{Binding Type, Converter={StaticResource NotificationTypeToColorConverter}}"
-                                                                                       Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                                         Foreground="{Binding Type, Converter={StaticResource NotificationTypeToColorConverter}}"
+                                                                                         Width="20" Height="20" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                             </Border>
-                                                            
+
                                                             <StackPanel Grid.Column="1" Margin="15,0,0,0">
                                                                 <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="14" Foreground="#1A1A24"/>
                                                                 <TextBlock Text="{Binding Message}" FontSize="13" Foreground="#7E84A3" TextWrapping="Wrap" MaxHeight="40" TextTrimming="CharacterEllipsis" Margin="0,2,0,0"/>
@@ -248,7 +309,7 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </ScrollViewer>
-                                
+
                                 <Border Grid.Row="2" Padding="15" Background="White" CornerRadius="0,0,18,18" BorderBrush="#F1F3F9" BorderThickness="0,1,0,0">
                                     <Button Content="Tüm Bildirimleri Gör" Style="{StaticResource MaterialDesignFlatButton}" 
                                             HorizontalAlignment="Center" Foreground="#E02020" FontWeight="Bold" Click="BtnViewAllNotifications_Click"/>
@@ -264,7 +325,7 @@
                 <Border.Effect>
                     <DropShadowEffect Color="#888888" BlurRadius="25" Opacity="0.08" Direction="270" ShadowDepth="5"/>
                 </Border.Effect>
-                
+
                 <ContentControl x:Name="MainContentControl" Margin="20"/>
             </Border>
 
@@ -308,24 +369,24 @@
                             <Border x:Name="BorderDialogIcon" Width="60" Height="60" Background="#E3F2FD" CornerRadius="30" Margin="0,0,0,20">
                                 <materialDesign:PackIcon x:Name="IconDialog" Kind="Information" Width="30" Height="30" Foreground="#2196F3" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                             </Border>
-                            
+
                             <TextBlock x:Name="TxtDialogTitle" Text="Başlık" FontSize="22" FontWeight="Bold" 
                                        Foreground="#1A1A24" Margin="0,0,0,10" HorizontalAlignment="Center" TextAlignment="Center"/>
-                            
+
                             <ScrollViewer MaxHeight="250" VerticalScrollBarVisibility="Auto" Margin="0,0,0,30">
                                 <TextBlock x:Name="TxtDialogMessage" Text="Mesaj içeriği..." FontSize="15" 
                                            Foreground="#666A7D" TextWrapping="Wrap" LineHeight="22" TextAlignment="Center"/>
                             </ScrollViewer>
-                            
+
                             <Grid x:Name="GridDialogButtons">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                
+
                                 <Button x:Name="BtnDialogCancel" Grid.Column="0" Content="İptal" Style="{StaticResource MaterialDesignFlatButton}" 
                                         Foreground="#7E84A3" Height="48" Margin="0,0,5,0" Click="BtnDialogResult_Click" Tag="False"/>
-                                
+
                                 <Button x:Name="BtnDialogConfirm" Grid.Column="1" Content="Tamam" Foreground="White" Background="#1A1A24" BorderBrush="#1A1A24" 
                                         materialDesign:ButtonAssist.CornerRadius="14" Height="48" FontWeight="SemiBold"
                                         Click="BtnDialogResult_Click" Tag="True"/>

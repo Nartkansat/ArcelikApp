@@ -67,6 +67,19 @@ namespace ArcelikExcelApp
             _ = InitNotificationCacheAsync();
         }
 
+        private void MenuToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Buton işaretliyse (Açık Menü)
+            if (MenuToggleButton.IsChecked == true)
+            {
+                SidebarColumn.Width = new GridLength(280);
+            }
+            // Buton işaretsizse (Kapalı/Dar Menü)
+            else
+            {
+                SidebarColumn.Width = new GridLength(85);
+            }
+        }
 
         private async Task InitNotificationCacheAsync()
         {
@@ -197,13 +210,20 @@ namespace ArcelikExcelApp
             PopupNotifications.IsOpen = !PopupNotifications.IsOpen;
         }
 
-        private void BtnMarkAllRead_Click(object sender, RoutedEventArgs e)
+        private async void BtnMarkAllRead_Click(object sender, RoutedEventArgs e)
         {
             if (AuthService.CurrentUser != null)
             {
-                int userId = AuthService.CurrentUser.Id;
-                _ = Task.Run(() => NotificationService.MarkAllAsRead(userId));
-                MainSnackbar.MessageQueue?.Enqueue("Tüm bildirimler okundu olarak işaretlendi.");
+                var result = await ModernDialogService.ShowAsync("Tümünü Okundu İşaretle",
+                   "Tüm bildirimleri okundu olarak işaretlemek istediğinize emin misiniz?",
+                   ModernDialogType.Question);
+
+                if (result)
+                {
+                    int userId = AuthService.CurrentUser.Id;
+                    await Task.Run(() => NotificationService.MarkAllAsRead(userId));
+                    _ = ModernDialogService.ShowAsync("Başarılı", "Tüm bildirimler okundu olarak işaretlendi.", ModernDialogType.Success);
+                }
             }
         }
 
@@ -350,4 +370,4 @@ namespace ArcelikExcelApp
         }
         #endregion
     }
-}
+}

@@ -38,6 +38,14 @@ namespace ArcelikExcelApp.Views
                 _allData = await Task.Run(() =>
                 {
                     using var db = new AppDbContext();
+
+                    int markupPercent = Convert.ToInt32(db.CostCalculations.FirstOrDefault().CardMarkupPercent); // db.Settings.FirstOrDefault().CardMarkupPercent gibi...
+                    Dispatcher.Invoke(() =>
+                    {
+                        ColCardPrice.Header = $"Kart Fiyatı (%{markupPercent})";
+                    });
+
+
                     // KEA kategorisindeki maliyetleri getir (en son hesaplananlar üstte)
                     return db.CostCalculations
                         .Where(c => c.SourceTable == "Kea")

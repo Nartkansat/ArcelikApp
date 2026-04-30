@@ -82,15 +82,32 @@
             </Grid.RowDefinitions>
 
             <!-- Araç Çubuğu (Arama vb.) -->
+            <!-- Araç Çubuğu (Dosya Adı, Arama vb.) -->
             <Border Grid.Row="0" Background="White" BorderBrush="#E2E8F0" BorderThickness="0,0,0,1" Padding="16,10" x:Name="PnlExcelToolbar" Visibility="Collapsed">
                 <Grid>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Grid.ColumnDefinitions>
+                        <!-- Dosya adının yazacağı sol kısım -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- Arama araçlarının olduğu sağ kısım -->
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- YENİ EKLENEN: Açık Olan Dosyanın Adı -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <materialDesign:PackIcon Kind="FileExcel" Foreground="#10B981" Width="24" Height="24" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                        <TextBlock x:Name="TxtCurrentFileName" Text="Dosya Seçilmedi" 
+                                   FontWeight="Bold" FontSize="15" Foreground="#334155" 
+                                   VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                    </StackPanel>
+
+                    <!-- MEVCUT KOD: Arama Araçları (Aynen Kalıyor, sadece Grid.Column="1" eklendi) -->
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                         <TextBox x:Name="TxtSearchExcel" Width="200"
                                  materialDesign:HintAssist.Hint="Aranacak Kelime..."
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                  Padding="8,4" Height="32"
                                  KeyDown="TxtSearchExcel_KeyDown"/>
-                        
+
                         <Button x:Name="BtnSearch" Content="Ara" Click="BtnSearch_Click"
                                 Margin="8,0" Height="32" Padding="12,0"
                                 Style="{StaticResource MaterialDesignRaisedButton}"
