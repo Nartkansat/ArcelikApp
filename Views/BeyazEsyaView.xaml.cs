@@ -208,6 +208,43 @@ namespace ArcelikExcelApp.Views
                 }
             }
         }
+        private async void MenuItem_OpenInArcelik_Click(object sender, RoutedEventArgs e)
+        {
+            if (GridBeyazEsya.SelectedItem is CostCalculation calc)
+            {
+                try
+                {
+                    string searchCode = calc.ProductCode; // Default olarak ProductCode
+                    
+                    // Veritabanından WhiteGoodsProduct çekilip Klima ise Description alınacak
+                    using (var db = new AppDbContext())
+                    {
+                        WhiteGoodsProduct? wgProduct = null;
+                        if (int.TryParse(calc.ProductId, out int prodId) && prodId > 0)
+                        {
+                            wgProduct = db.WhiteGoodsProducts.FirstOrDefault(x => x.Id == prodId);
+                        }
+                        
+                        if (wgProduct == null)
+                        {
+                            wgProduct = db.WhiteGoodsProducts.OrderByDescending(x => x.Id).FirstOrDefault(x => x.ProductCode == calc.ProductCode);
+                        }
+
+                        if (wgProduct != null && wgProduct.ExcelFileType == "Klima" && !string.IsNullOrWhiteSpace(wgProduct.Description))
+                        {
+                            searchCode = wgProduct.Description; // Dış Ünite SKU
+                        }
+                    }
+
+                    string url = $"https://www.arcelik.com.tr/arama?q={searchCode}";
+                    await BrowserHelper.OpenUrlAsync(url);
+                }
+                catch (Exception ex)
+                {
+                    await ModernDialogService.ShowAsync("Hata", $"İşlem sırasında bir hata oluştu: {ex.Message}", ModernDialogType.Error);
+                }
+            }
+        }
 
         private async void MenuItem_ViewAllValors_Click(object sender, RoutedEventArgs e)
         {

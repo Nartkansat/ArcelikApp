@@ -90,7 +90,7 @@ namespace ArcelikExcelApp.Views
         }
 
         // ─── Oliz için Çalışma Sayfalarını Yükle ──────────────────────────────────────
-        private void LoadWorksheetsIfOliz()
+        private async void LoadWorksheetsIfOliz()
         {
             if (string.IsNullOrEmpty(_selectedFilePath) || !File.Exists(_selectedFilePath)) return;
 
@@ -116,7 +116,7 @@ namespace ArcelikExcelApp.Views
             }
             catch (Exception ex)
             {
-                MainSnackbar.MessageQueue?.Enqueue($"Excel sayfaları yüklenirken hata: {ex.Message}");
+                await ModernDialogService.ShowAsync("Excel Hatası", $"Excel sayfaları yüklenirken hata oluştu:\n{ex.Message}", ModernDialogType.Error);
             }
         }
 
@@ -160,6 +160,25 @@ namespace ArcelikExcelApp.Views
                     return;
                 }
                 whiteGoodsType = CmbWhiteGoodsType.SelectedItem.ToString()!;
+            }
+
+            // Uzantı kontrolü (.xlsx)
+            string extension = System.IO.Path.GetExtension(_selectedFilePath).ToLower();
+            if (extension != ".xlsx")
+            {
+                await ModernDialogService.ShowAsync("Geçersiz Dosya", "Sadece .xlsx uzantılı dosyalar desteklenmektedir.", ModernDialogType.Warning);
+                return;
+            }
+
+            // İsim çakışması kontrolü
+            string fileName = System.IO.Path.GetFileName(_selectedFilePath);
+            using (var context = new ArcelikApp.Data.AppDbContext())
+            {
+                if (context.UploadedFiles.Any(f => f.FileName == fileName))
+                {
+                    await ModernDialogService.ShowAsync("Dosya Zaten Mevcut", $"'{fileName}' isimli bir dosya zaten yüklü. Lütfen farklı bir isimle deneyin veya mevcut dosyayı Dosya Yönetimi panelinden silin.", ModernDialogType.Warning);
+                    return;
+                }
             }
 
             // Dosya kilitli mi kontrolü (Excel'de açıksa hata verir)
@@ -221,15 +240,15 @@ namespace ArcelikExcelApp.Views
                 });
 
                 if (categoryName == "Beyaz Eşya" || categoryName == "Kea")
-                    MainSnackbar.MessageQueue?.Enqueue($"✅ {whiteGoodsType}: {importedCount} ürün başarıyla kaydedildi.");
+                    await ModernDialogService.ShowAsync("Başarılı", $"✅ {whiteGoodsType}: {importedCount} ürün başarıyla kaydedildi.", ModernDialogType.Success);
                 else if (categoryName == "Oliz Kampanya")
-                    MainSnackbar.MessageQueue?.Enqueue("✅ Oliz Kampanya verileri başarıyla yüklendi.");
+                    await ModernDialogService.ShowAsync("Başarılı", "✅ Oliz Kampanya verileri başarıyla yüklendi.", ModernDialogType.Success);
                 else
-                    MainSnackbar.MessageQueue?.Enqueue($"{categoryName} dosyası yüklendi. (İşleme mantığı eklenecek)");
+                    MainSnackbar.MessageQueue?.Enqueue($"{categoryName} dosyası yüklendi.");
             }
             catch (Exception ex)
             {
-                MainSnackbar.MessageQueue?.Enqueue($"Hata oluştu: {ex.Message}");
+                await ModernDialogService.ShowAsync("İşlem Hatası", $"Yükleme sırasında bir hata oluştu:\n{ex.Message}", ModernDialogType.Error);
             }
             finally
             {

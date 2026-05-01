@@ -68,6 +68,11 @@
                                 <materialDesign:PackIcon Kind="MicrosoftExcel" Foreground="#10B981"/>
                             </MenuItem.Icon>
                         </MenuItem>
+                        <MenuItem Header="Arçelik.com.tr'de Aç" Click="MenuItem_OpenInArcelik_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="Web" Foreground="#E02020"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>

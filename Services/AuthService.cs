@@ -65,7 +65,14 @@ namespace ArcelikApp.Services
                 TokenStorage.ClearToken();
             }
 
-            db.SaveChanges();
+            try
+            {
+                db.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                return new LoginResult { Success = false, Message = $"Giriş sırasında veritabanı hatası oluştu: {ex.Message}" };
+            }
 
             CurrentUser = user;
             SessionId = newSessionId;

@@ -1,0 +1,78 @@
+<UserControl x:Class="ArcelikExcelApp.Views.FileManagementView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ArcelikExcelApp.Views"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d" 
+             d:DesignHeight="700" d:DesignWidth="1000"
+             Background="White">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,25">
+            <TextBlock Text="Dosya Yönetimi" FontSize="24" FontWeight="Bold" Foreground="#1A1A24"/>
+            <TextBlock Text="Sisteme yüklenen Excel dosyalarını görüntüleyin ve yönetin." Foreground="#666A7D" Margin="0,5,0,0"/>
+        </StackPanel>
+
+        <materialDesign:Card Grid.Row="1" UniformCornerRadius="18" materialDesign:ElevationAssist.Elevation="Dp2">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Border Grid.Row="0" Background="#F8F9FB" Padding="15">
+                    <Grid>
+                        <StackPanel Orientation="Horizontal">
+                            <materialDesign:PackIcon Kind="Magnify" Foreground="#666A7D" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBox x:Name="TxtSearch" Width="250" materialDesign:HintAssist.Hint="Dosya adı ile ara..." 
+                                     TextChanged="TxtSearch_TextChanged" BorderThickness="0,0,0,1" BorderBrush="#E2E8F0"/>
+                        </StackPanel>
+                        <TextBlock x:Name="TxtTotalCount" Text="Toplam: 0 Dosya" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#666A7D" FontWeight="SemiBold"/>
+                    </Grid>
+                </Border>
+
+                <DataGrid Grid.Row="1" x:Name="GridFiles" AutoGenerateColumns="False" IsReadOnly="True" 
+                          CanUserAddRows="False" Background="Transparent" BorderThickness="0"
+                          RowHeight="55" ColumnHeaderHeight="45" SelectionMode="Single"
+                          HorizontalGridLinesBrush="#F1F5F9" VerticalGridLinesBrush="Transparent">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="60"/>
+                        <DataGridTemplateColumn Header="Dosya Adı" Width="*">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <materialDesign:PackIcon Kind="MicrosoftExcel" Foreground="#10B981" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                        <TextBlock Text="{Binding FileName}" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Kategori" Binding="{Binding Category}" Width="150"/>
+                        <DataGridTextColumn Header="Yükleme Tarihi" Binding="{Binding UploadDate}" Width="150"/>
+                        <DataGridTemplateColumn Header="İşlemler" Width="100">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Style="{StaticResource MaterialDesignFlatButton}" 
+                                            Click="BtnDelete_Click" Tag="{Binding Id}"
+                                            ToolTip="Dosyayı Sil" Padding="0" Width="35" Height="35">
+                                        <materialDesign:PackIcon Kind="DeleteOutline" Foreground="#EF5350" Width="20" Height="20"/>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+
+                <Grid x:Name="OverlayLoading" Grid.Row="1" Visibility="Collapsed" Background="#88FFFFFF">
+                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" IsIndeterminate="True" Width="40" Height="40"/>
+                </Grid>
+            </Grid>
+        </materialDesign:Card>
+    </Grid>
+</UserControl>

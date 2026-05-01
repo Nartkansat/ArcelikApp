@@ -352,6 +352,15 @@ namespace ArcelikExcelApp
                         TxtPageTitle.Text = "Excel İçeri Aktar";
                         MainContentControl.Content = new ExcelIslemleriView();
                         break;
+                    case "FileManagement":
+                        if (AuthService.CurrentUser?.Role != "Admin")
+                        {
+                            _ = ModernDialogService.ShowAsync("Yetki Hatası", "Bu bölüme sadece yöneticiler erişebilir.", ModernDialogType.Warning);
+                            return;
+                        }
+                        TxtPageTitle.Text = "Dosya Yönetimi";
+                        MainContentControl.Content = new FileManagementView();
+                        break;
                     case "Settings":
                         TxtPageTitle.Text = "Ayarlar";
                         MainContentControl.Content = new SettingsView();

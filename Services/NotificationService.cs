@@ -25,15 +25,26 @@ namespace ArcelikApp.Services
                 IsRead = false
             };
 
-            db.Notifications.Add(notification);
-            db.SaveChanges();
-            
-            NotificationsChanged?.Invoke(null, EventArgs.Empty);
-
-            // If the notification is for the current user, show a Windows toast
-            if (AuthService.CurrentUser != null && userId == AuthService.CurrentUser.Id)
+            try
             {
-                ShowToast(title, message, type);
+                db.Notifications.Add(notification);
+                db.SaveChanges();
+                
+                NotificationsChanged?.Invoke(null, EventArgs.Empty);
+
+                // If the notification is for the current user, show a Windows toast
+                if (AuthService.CurrentUser != null && userId == AuthService.CurrentUser.Id)
+                {
+                    ShowToast(title, message, type);
+                }
+            }
+            catch (Exception)
+            {
+                // Veritabanına kaydedilemese bile en azından toast göstermeyi deneyebiliriz
+                if (AuthService.CurrentUser != null && userId == AuthService.CurrentUser.Id)
+                {
+                    ShowToast(title, message, type);
+                }
             }
         }
 

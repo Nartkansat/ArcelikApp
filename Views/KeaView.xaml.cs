@@ -209,5 +209,22 @@ namespace ArcelikExcelApp.Views
                 }
             }
         }
+
+        private async void MenuItem_OpenInArcelik_Click(object sender, RoutedEventArgs e)
+        {
+            if (GridKea.SelectedItem is CostCalculation calc)
+            {
+                try
+                {
+                    string searchCode = calc.ProductCode; // KEA için direkt ürün kodunu arat
+                    string url = $"https://www.arcelik.com.tr/arama?q={searchCode}";
+                    await BrowserHelper.OpenUrlAsync(url);
+                }
+                catch (Exception ex)
+                {
+                    await ModernDialogService.ShowAsync("Hata", $"İşlem sırasında bir hata oluştu: {ex.Message}", ModernDialogType.Error);
+                }
+            }
+        }
     }
 }

@@ -163,6 +163,18 @@
                             </Grid>
                         </Button>
 
+                        <Button x:Name="BtnFileManagement" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="FileManagement" ToolTip="Dosya Yönetimi">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="65"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <materialDesign:PackIcon Grid.Column="0" Kind="FileCog" Width="22" Height="22" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="Dosya Yönetimi" FontSize="16" FontWeight="Medium" VerticalAlignment="Center"
+                                           Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                            </Grid>
+                        </Button>
+
                         <Button x:Name="BtnUserManagement" Style="{StaticResource PremiumNavButton}" Click="Nav_Click" Tag="UserManagement" ToolTip="Kullanıcı Yönetimi">
                             <Grid>
                                 <Grid.ColumnDefinitions>
