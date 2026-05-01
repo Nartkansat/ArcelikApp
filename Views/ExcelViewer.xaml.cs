@@ -52,6 +52,7 @@ namespace ArcelikExcelApp.Views
         {
             try
             {
+                OverlayLoading.Visibility = Visibility.Visible;
                 _allFiles = await Task.Run(() =>
                 {
                     using var db = new AppDbContext();
@@ -75,7 +76,11 @@ namespace ArcelikExcelApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Dosyalar yüklenirken hata oluştu: {ex.Message}");
+                await ModernDialogService.ShowAsync("Hata", $"Dosyalar yüklenirken hata oluştu: {ex.Message}", ModernDialogType.Error);
+            }
+            finally
+            {
+                OverlayLoading.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -91,23 +96,37 @@ namespace ArcelikExcelApp.Views
         {
             if (ListFiles.SelectedItem is UploadedFile selectedFile)
             {
-                // 1. Önce Veritabanındaki veriyi kontrol et (En dinamik yöntem)
-                if (selectedFile.FileData != null && selectedFile.FileData.Length > 0)
+                OverlayLoading.Visibility = Visibility.Visible;
+                try
                 {
-                    await LoadExcelFileAsync(selectedFile.FileData, selectedFile.FileName);
-                    return;
-                }
+                    // 1. Önce Veritabanındaki veriyi kontrol et (En dinamik yöntem)
+                    if (selectedFile.FileData != null && selectedFile.FileData.Length > 0)
+                    {
+                        await LoadExcelFileAsync(selectedFile.FileData, selectedFile.FileName);
+                        return;
+                    }
 
-                // 2. Eğer DB'de yoksa (eski kayıtlar), yerel dosyaya bak
-                string absolutePath = FileHelper.GetAbsolutePath(selectedFile.FilePath);
-                
-                if (File.Exists(absolutePath))
-                {
-                    await LoadExcelFileAsync(await File.ReadAllBytesAsync(absolutePath), selectedFile.FileName);
+                    // 2. Eğer DB'de yoksa (eski kayıtlar), yerel dosyaya bak
+                    string absolutePath = FileHelper.GetAbsolutePath(selectedFile.FilePath);
+                    
+                    if (File.Exists(absolutePath))
+                    {
+                        await LoadExcelFileAsync(await File.ReadAllBytesAsync(absolutePath), selectedFile.FileName);
+                    }
+                    else
+                    {
+                        await ModernDialogService.ShowAsync("Dosya Bulunamadı", $"Dosya ne veritabanında ne de yerel diskte bulunamadı:\n{absolutePath}", ModernDialogType.Warning);
+                    }
                 }
-                else
+                finally
                 {
-                    MessageBox.Show($"Dosya ne veritabanında ne de yerel diskte bulunamadı:\n{absolutePath}", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    // LoadExcelFileAsync kendi içinde kapattığı için burada sadece hata durumunda veya
+                    // LoadExcelFileAsync'e girmeyen durumlarda kapatmak için güvenli bir yer.
+                    // Eğer LoadExcelFileAsync'e girerse o zaten sonunda kapatacak.
+                    if (OverlayLoading.Visibility == Visibility.Visible && selectedFile.FileData == null && !File.Exists(FileHelper.GetAbsolutePath(selectedFile.FilePath)))
+                    {
+                        OverlayLoading.Visibility = Visibility.Collapsed;
+                    }
                 }
             }
         }
@@ -189,7 +208,7 @@ namespace ArcelikExcelApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Excel dosyası okunurken hata oluştu:\n{ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                await ModernDialogService.ShowAsync("Excel Okuma Hatası", $"Excel dosyası okunurken hata oluştu:\n{ex.Message}", ModernDialogType.Error);
                 PnlEmptyState.Visibility = Visibility.Visible;
             }
             finally

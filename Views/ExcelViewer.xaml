@@ -62,13 +62,6 @@
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
-            
-            <Grid x:Name="OverlayLoading" Grid.RowSpan="3" Background="#AAFFFFFF" Visibility="Collapsed">
-                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
-                    <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" IsIndeterminate="True" Width="40" Height="40" Foreground="#E02020" HorizontalAlignment="Center"/>
-                    <TextBlock Text="Dosya Açılıyor..." Margin="0,12,0,0" FontWeight="SemiBold" Foreground="#334155"/>
-                </StackPanel>
-            </Grid>
         </Grid>
 
         <!-- Ayraç -->
@@ -130,6 +123,14 @@
                 <materialDesign:PackIcon Kind="MicrosoftExcel" Width="80" Height="80" Foreground="#CBD5E1" HorizontalAlignment="Center"/>
                 <TextBlock Text="Görüntülemek için sol taraftan bir dosya seçin veya sürükleyin." 
                            FontSize="16" Foreground="#94A3B8" Margin="0,16,0,0"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Loading Overlay (Tüm ekranı kaplar) -->
+        <Grid x:Name="OverlayLoading" Grid.ColumnSpan="3" Background="#AAFFFFFF" Visibility="Collapsed" Panel.ZIndex="1000">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" IsIndeterminate="True" Width="50" Height="50" Foreground="#E02020" HorizontalAlignment="Center"/>
+                <TextBlock Text="Excel Dosyası İşleniyor..." Margin="0,16,0,0" FontWeight="SemiBold" FontSize="16" Foreground="#1C2B4A" HorizontalAlignment="Center"/>
             </StackPanel>
         </Grid>
     </Grid>

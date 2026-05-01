@@ -23,6 +23,7 @@ namespace ArcelikApp.Excel.Mapping
             { "Kurutma Makinesi",  KurutmaMappingProfile.Get()           },
             { "Solo Pişirici",     SoloPisiriciMappingProfile.Get()      },
             { "Isıtıcı Aletler",   IsiticiMappingProfile.Get()           },
+            { "Havalandırma",      HavalandirmaMappingProfile.Get()      },
 
             // --- KEA ---
             { "Mutfak",            KeaMutfakMappingProfile.Get()         },
@@ -31,7 +32,7 @@ namespace ArcelikApp.Excel.Mapping
 
         private static readonly Dictionary<string, List<string>> _categoryMap = new(System.StringComparer.OrdinalIgnoreCase)
         {
-            { "Beyaz Eşya", new() { "Ankastre", "Soğutucu", "Çamaşır Makinesi", "Bulaşık Makinesi", "Televizyon", "Klima", "Kurutma Makinesi", "Solo Pişirici", "Isıtıcı Aletler" } },
+            { "Beyaz Eşya", new() { "Ankastre", "Soğutucu", "Çamaşır Makinesi", "Bulaşık Makinesi", "Televizyon", "Klima", "Kurutma Makinesi", "Solo Pişirici", "Isıtıcı Aletler", "Havalandırma" } },
             { "Kea",        new() { "Mutfak", "Süpürge ve Ütü" } }
         };
 

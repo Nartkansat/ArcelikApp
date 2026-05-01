@@ -1,4 +1,5 @@
 using ArcelikApp.Data;
+using ArcelikApp.Services;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -99,7 +100,7 @@ namespace ArcelikExcelApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Dashboard verileri yüklenirken hata oluştu: {ex.Message}", "Veri Hatası", MessageBoxButton.OK, MessageBoxImage.Warning);
+                await ModernDialogService.ShowAsync("Veri Hatası", $"Dashboard verileri yüklenirken hata oluştu: {ex.Message}", ModernDialogType.Warning);
             }
         }
     }

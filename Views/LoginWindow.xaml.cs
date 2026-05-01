@@ -266,6 +266,42 @@ namespace ArcelikExcelApp.Views
             TxtResetError.Visibility = Visibility.Visible;
         }
 
+        private void BtnShowPassword_Checked(object sender, RoutedEventArgs e)
+        {
+            TxtPasswordVisible.Text = TxtPassword.Password;
+            TxtPassword.Visibility = Visibility.Collapsed;
+            TxtPasswordVisible.Visibility = Visibility.Visible;
+            TxtPasswordVisible.Focus();
+            if (TxtPasswordVisible.Text.Length > 0)
+                TxtPasswordVisible.CaretIndex = TxtPasswordVisible.Text.Length;
+        }
+
+        private void BtnShowPassword_Unchecked(object sender, RoutedEventArgs e)
+        {
+            TxtPassword.Password = TxtPasswordVisible.Text;
+            TxtPasswordVisible.Visibility = Visibility.Collapsed;
+            TxtPassword.Visibility = Visibility.Visible;
+            TxtPassword.Focus();
+        }
+
+        private void BtnShowResetPassword_Checked(object sender, RoutedEventArgs e)
+        {
+            TxtResetNewPasswordVisible.Text = TxtResetNewPassword.Password;
+            TxtResetNewPassword.Visibility = Visibility.Collapsed;
+            TxtResetNewPasswordVisible.Visibility = Visibility.Visible;
+            TxtResetNewPasswordVisible.Focus();
+            if (TxtResetNewPasswordVisible.Text.Length > 0)
+                TxtResetNewPasswordVisible.CaretIndex = TxtResetNewPasswordVisible.Text.Length;
+        }
+
+        private void BtnShowResetPassword_Unchecked(object sender, RoutedEventArgs e)
+        {
+            TxtResetNewPassword.Password = TxtResetNewPasswordVisible.Text;
+            TxtResetNewPasswordVisible.Visibility = Visibility.Collapsed;
+            TxtResetNewPassword.Visibility = Visibility.Visible;
+            TxtResetNewPassword.Focus();
+        }
+
         private void ShowError(string message)
         {
             TxtError.Text = message;

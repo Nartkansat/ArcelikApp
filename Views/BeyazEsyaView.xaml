@@ -68,6 +68,11 @@
                                 <materialDesign:PackIcon Kind="MicrosoftExcel" Foreground="#10B981"/>
                             </MenuItem.Icon>
                         </MenuItem>
+                        <MenuItem Header="Tüm Valörleri Gör" Click="MenuItem_ViewAllValors_Click">
+                            <MenuItem.Icon>
+                                <materialDesign:PackIcon Kind="ViewList" Foreground="#3949AB"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>
@@ -110,5 +115,54 @@
                         Height="32" Padding="12,0" Margin="16,0,0,0" Click="BtnNext_Click"/>
             </StackPanel>
         </Border>
+
+        <!-- Loading Overlay -->
+        <Grid x:Name="OverlayLoading" Grid.RowSpan="4" Background="#AAFFFFFF" Visibility="Collapsed">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" IsIndeterminate="True" Width="40" Height="40" Foreground="#E02020" HorizontalAlignment="Center"/>
+                <TextBlock Text="Veriler Yükleniyor..." Margin="0,12,0,0" FontWeight="SemiBold" Foreground="#1C2B4A"/>
+            </StackPanel>
+        </Grid>
+
+        <!-- Valör Dialog Overlay -->
+        <Grid x:Name="ValorDialogOverlay" Grid.RowSpan="4" Visibility="Collapsed">
+            <Border Background="#221A1A24">
+                <Border.Effect>
+                    <BlurEffect Radius="10"/>
+                </Border.Effect>
+            </Border>
+            <materialDesign:Card Width="500" VerticalAlignment="Center" HorizontalAlignment="Center" UniformCornerRadius="16" Background="White">
+                <materialDesign:Card.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="30" Opacity="0.15" Direction="270" ShadowDepth="5"/>
+                </materialDesign:Card.Effect>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Border Grid.Row="0" Background="#F8F9FB" Padding="20,16" CornerRadius="16,16,0,0" BorderThickness="0,0,0,1" BorderBrush="#E2E8F0">
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="40" Height="40" Background="#E8EAF6" CornerRadius="20">
+                                <materialDesign:PackIcon Kind="CashMultiple" Width="24" Height="24" Foreground="#3949AB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Margin="15,0,0,0" VerticalAlignment="Center">
+                                <TextBlock Text="Tüm Valör Maliyetleri" FontSize="18" FontWeight="Bold" Foreground="#1A1A24"/>
+                                <TextBlock x:Name="TxtValorProductName" Text="Ürün Adı" FontSize="13" Foreground="#64748B" TextTrimming="CharacterEllipsis" MaxWidth="380"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+                    
+                    <StackPanel Grid.Row="1" Margin="24" x:Name="PnlValorContainer">
+                        <!-- Items will be generated here in code-behind -->
+                    </StackPanel>
+                    
+                    <Border Grid.Row="2" Background="#FAFAFA" Padding="20,16" CornerRadius="0,0,16,16" BorderThickness="0,1,0,0" BorderBrush="#E2E8F0">
+                        <Button Content="Kapat" HorizontalAlignment="Right" Style="{StaticResource MaterialDesignFlatButton}" Foreground="#64748B" FontWeight="SemiBold" Click="BtnCloseValorDialog_Click"/>
+                    </Border>
+                </Grid>
+            </materialDesign:Card>
+        </Grid>
     </Grid>
 </UserControl>

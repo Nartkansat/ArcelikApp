@@ -36,11 +36,13 @@ namespace ArcelikExcelApp.Views
         {
             try
             {
+                OverlayLoading.Visibility = Visibility.Visible;
                 _allData = await Task.Run(() =>
                 {
                     using var db = new AppDbContext();
 
-                    int markupPercent = Convert.ToInt32(db.CostCalculations.FirstOrDefault().CardMarkupPercent); // db.Settings.FirstOrDefault().CardMarkupPercent gibi...
+                    var firstCalc = db.CostCalculations.FirstOrDefault();
+                    int markupPercent = firstCalc != null ? Convert.ToInt32(firstCalc.CardMarkupPercent) : 10;
                     Dispatcher.Invoke(() =>
                     {
                         ColCardPrice.Header = $"Kart Fiyatı (%{markupPercent})";
@@ -57,7 +59,11 @@ namespace ArcelikExcelApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Veriler yüklenirken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                await ModernDialogService.ShowAsync("Hata", $"Veriler yüklenirken hata oluştu: {ex.Message}", ModernDialogType.Error);
+            }
+            finally
+            {
+                OverlayLoading.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -133,7 +139,7 @@ namespace ArcelikExcelApp.Views
             }
         }
 
-        private void MenuItem_OpenExcel_Click(object sender, RoutedEventArgs e)
+        private async void MenuItem_OpenExcel_Click(object sender, RoutedEventArgs e)
         {
             if (GridBeyazEsya.SelectedItem is CostCalculation calc)
             {
@@ -193,14 +199,180 @@ namespace ArcelikExcelApp.Views
                     }
                     else
                     {
-                        MessageBox.Show("Bu ürüne ait kaynak Excel dosyası bulunamadı.", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        await ModernDialogService.ShowAsync("Hata", "Bu ürüne ait kaynak Excel dosyası bulunamadı.", ModernDialogType.Warning);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Dosya açılırken hata oluştu: {ex.Message}");
+                    await ModernDialogService.ShowAsync("Hata", $"Dosya açılırken hata oluştu: {ex.Message}", ModernDialogType.Error);
                 }
             }
+        }
+
+        private async void MenuItem_ViewAllValors_Click(object sender, RoutedEventArgs e)
+        {
+            if (GridBeyazEsya.SelectedItem is CostCalculation calc)
+            {
+                try
+                {
+                    OverlayLoading.Visibility = Visibility.Visible;
+                    
+                    WhiteGoodsProduct? wgProduct = null;
+                    await Task.Run(() =>
+                    {
+                        using var db = new AppDbContext();
+                        // Önce ID ile ara
+                        if (int.TryParse(calc.ProductId, out int prodId) && prodId > 0)
+                        {
+                            wgProduct = db.WhiteGoodsProducts.FirstOrDefault(x => x.Id == prodId);
+                        }
+                        
+                        // Bulunamazsa Ürün Kodu ile en güncelini al
+                        if (wgProduct == null)
+                        {
+                            wgProduct = db.WhiteGoodsProducts
+                                .OrderByDescending(x => x.Id)
+                                .FirstOrDefault(x => x.ProductCode == calc.ProductCode);
+                        }
+                    });
+
+                    OverlayLoading.Visibility = Visibility.Collapsed;
+
+                    if (wgProduct == null)
+                    {
+                        await ModernDialogService.ShowAsync("Hata", "Bu ürüne ait kaynak detaylar veritabanında bulunamadı.", ModernDialogType.Warning);
+                        return;
+                    }
+
+                    TxtValorProductName.Text = $"{calc.ProductCode} - {calc.ProductName}";
+                    PnlValorContainer.Children.Clear();
+
+                    var valors = new[]
+                    {
+                        new { Label = wgProduct.ExcelFileType == "Klima" ? "30 Günlük" : "30 Günlük", Price = wgProduct.WholesalePrice30 },
+                        new { Label = wgProduct.ExcelFileType == "Klima" ? "Y060" : "60 Günlük", Price = wgProduct.WholesalePrice60 },
+                        new { Label = wgProduct.ExcelFileType == "Klima" ? "Y90" : "90 Günlük", Price = wgProduct.WholesalePrice90 },
+                        new { Label = wgProduct.ExcelFileType == "Klima" ? "Y120" : "120 Günlük", Price = wgProduct.WholesalePrice120 }
+                    };
+
+                    bool hasAnyData = false;
+
+                    foreach (var valor in valors)
+                    {
+                        if (valor.Price.HasValue && valor.Price.Value > 0)
+                        {
+                            hasAnyData = true;
+                            
+                            // Hesaplamalar
+                            decimal priceConversion = calc.PriceConversion; // İndirim miktarı
+                            decimal purchasePrice = valor.Price.Value - priceConversion;
+                            decimal finalCost = Math.Round(purchasePrice * (1 + calc.CardMarkupPercent / 100m), 2);
+
+                            // UI Elemanlarını Oluştur
+                            var border = new Border
+                            {
+                                Background = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#F1F5F9")),
+                                CornerRadius = new CornerRadius(12),
+                                Padding = new Thickness(20, 15, 20, 15),
+                                Margin = new Thickness(0, 0, 0, 12)
+                            };
+
+                            var grid = new Grid();
+                            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+                            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+                            var titleStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+                            titleStack.Children.Add(new TextBlock 
+                            { 
+                                Text = $"{valor.Label} Valör Maliyeti", 
+                                FontWeight = FontWeights.Bold, 
+                                FontSize = 15, 
+                                Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#1E293B")) 
+                            });
+                            
+                            titleStack.Children.Add(new TextBlock 
+                            { 
+                                Text = $"Baz: {valor.Price.Value:N2} ₺ | İndirim: {priceConversion:N2} ₺", 
+                                FontSize = 12, 
+                                Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#64748B")),
+                                Margin = new Thickness(0, 4, 0, 0)
+                            });
+
+                            titleStack.Children.Add(new TextBlock 
+                            { 
+                                Text = $"Net Maliyet: {purchasePrice:N2} ₺", 
+                                FontWeight = FontWeights.Bold,
+                                FontSize = 14, 
+                                Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#10B981")), // Yeşil renk
+                                Margin = new Thickness(0, 6, 0, 0)
+                            });
+
+                            var costStack = new StackPanel { VerticalAlignment = VerticalAlignment.Center, HorizontalAlignment = HorizontalAlignment.Right };
+                            
+                            costStack.Children.Add(new TextBlock
+                            {
+                                Text = "Kredi Kartı",
+                                FontSize = 12,
+                                FontWeight = FontWeights.SemiBold,
+                                Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#64748B")),
+                                HorizontalAlignment = HorizontalAlignment.Right,
+                                Margin = new Thickness(0, 0, 0, 2)
+                            });
+
+                            costStack.Children.Add(new TextBlock
+                            {
+                                Text = $"{finalCost:N2} ₺",
+                                FontWeight = FontWeights.ExtraBold,
+                                FontSize = 18,
+                                Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#E02020")),
+                                HorizontalAlignment = HorizontalAlignment.Right
+                            });
+                            
+                            costStack.Children.Add(new TextBlock
+                            {
+                                Text = $"%{(int)calc.CardMarkupPercent} Komisyon",
+                                FontSize = 11,
+                                Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#94A3B8")),
+                                HorizontalAlignment = HorizontalAlignment.Right,
+                                Margin = new Thickness(0, 2, 0, 0)
+                            });
+
+                            Grid.SetColumn(titleStack, 0);
+                            Grid.SetColumn(costStack, 1);
+
+                            grid.Children.Add(titleStack);
+                            grid.Children.Add(costStack);
+                            border.Child = grid;
+
+                            PnlValorContainer.Children.Add(border);
+                        }
+                    }
+
+                    if (!hasAnyData)
+                    {
+                        PnlValorContainer.Children.Add(new TextBlock
+                        {
+                            Text = "Bu ürün için tanımlanmış ek valör fiyatları bulunamadı.",
+                            Foreground = new System.Windows.Media.SolidColorBrush((System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#64748B")),
+                            HorizontalAlignment = HorizontalAlignment.Center,
+                            FontSize = 14,
+                            Margin = new Thickness(0, 30, 0, 30)
+                        });
+                    }
+
+                    ValorDialogOverlay.Visibility = Visibility.Visible;
+                }
+                catch (Exception ex)
+                {
+                    OverlayLoading.Visibility = Visibility.Collapsed;
+                    await ModernDialogService.ShowAsync("Hata", $"Valörler hesaplanırken beklenmeyen bir hata oluştu:\n{ex.Message}", ModernDialogType.Error);
+                }
+            }
+        }
+
+        private void BtnCloseValorDialog_Click(object sender, RoutedEventArgs e)
+        {
+            ValorDialogOverlay.Visibility = Visibility.Collapsed;
         }
     }
 }

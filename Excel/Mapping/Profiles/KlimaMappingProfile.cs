@@ -23,9 +23,9 @@ namespace ArcelikApp.Excel.Mapping.Profiles
                 { nameof(WhiteGoodsProduct.ProductName),       3  },  // C -> Klimalar
 
                 // --- Toptan Fiyatlar (Red line sonrası) ---
-                { nameof(WhiteGoodsProduct.WholesalePrice30),  5  },  // E -> F+30 Gün
-                { nameof(WhiteGoodsProduct.WholesalePrice60),  6  },  // F -> F+60 Gün
-                { nameof(WhiteGoodsProduct.WholesalePrice90),  7  },  // G -> F+90 Gün
+                { nameof(WhiteGoodsProduct.WholesalePrice60),   4  },  // D -> F+30 Gün (Y060)
+                { nameof(WhiteGoodsProduct.WholesalePrice90),   5  },  // E -> F+60 Gün (Y90)
+                { nameof(WhiteGoodsProduct.WholesalePrice120),  6  },  // F -> F+90 Gün (Y120)
             }
         };
     }

@@ -1,5 +1,6 @@
 using ArcelikApp.Data;
 using ArcelikApp.Models;
+using ArcelikApp.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -35,11 +36,13 @@ namespace ArcelikExcelApp.Views
         {
             try
             {
+                OverlayLoading.Visibility = Visibility.Visible;
                 _allData = await Task.Run(() =>
                 {
                     using var db = new AppDbContext();
 
-                    int markupPercent = Convert.ToInt32(db.CostCalculations.FirstOrDefault().CardMarkupPercent); // db.Settings.FirstOrDefault().CardMarkupPercent gibi...
+                    var firstCalc = db.CostCalculations.FirstOrDefault();
+                    int markupPercent = firstCalc != null ? Convert.ToInt32(firstCalc.CardMarkupPercent) : 10;
                     Dispatcher.Invoke(() =>
                     {
                         ColCardPrice.Header = $"Kart Fiyatı (%{markupPercent})";
@@ -57,7 +60,11 @@ namespace ArcelikExcelApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Veriler yüklenirken hata oluştu: {ex.Message}", "Hata", MessageBoxButton.OK, MessageBoxImage.Error);
+                await ModernDialogService.ShowAsync("Hata", $"Veriler yüklenirken hata oluştu: {ex.Message}", ModernDialogType.Error);
+            }
+            finally
+            {
+                OverlayLoading.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -133,7 +140,7 @@ namespace ArcelikExcelApp.Views
             }
         }
 
-        private void MenuItem_OpenExcel_Click(object sender, RoutedEventArgs e)
+        private async void MenuItem_OpenExcel_Click(object sender, RoutedEventArgs e)
         {
             if (GridKea.SelectedItem is CostCalculation calc)
             {
@@ -193,12 +200,12 @@ namespace ArcelikExcelApp.Views
                     }
                     else
                     {
-                        MessageBox.Show("Bu ürüne ait kaynak Excel dosyası bulunamadı.", "Hata", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        await ModernDialogService.ShowAsync("Hata", "Bu ürüne ait kaynak Excel dosyası bulunamadı.", ModernDialogType.Warning);
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Dosya açılırken hata oluştu: {ex.Message}");
+                    await ModernDialogService.ShowAsync("Hata", $"Dosya açılırken hata oluştu: {ex.Message}", ModernDialogType.Error);
                 }
             }
         }

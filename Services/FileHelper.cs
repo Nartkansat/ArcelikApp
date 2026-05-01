@@ -54,5 +54,27 @@ namespace ArcelikApp.Services
             // Değilse uygulama çalıştığı dizinle birleştir
             return Path.Combine(AppDomain.CurrentDomain.BaseDirectory, savedPath);
         }
+
+        /// <summary>
+        /// Dosyanın başka bir işlem tarafından kilitli olup olmadığını kontrol eder.
+        /// </summary>
+        public static bool IsFileLocked(string filePath)
+        {
+            if (!File.Exists(filePath)) return false;
+
+            try
+            {
+                using (FileStream stream = File.Open(filePath, FileMode.Open, FileAccess.Read, FileShare.None))
+                {
+                    stream.Close();
+                }
+            }
+            catch (IOException)
+            {
+                // Dosya kilitli (başka bir uygulama tarafından kullanılıyor)
+                return true;
+            }
+            return false;
+        }
     }
 }

@@ -225,7 +225,20 @@ namespace ArcelikExcelApp.Views
                 {
                     foreach (var tableName in _tablesPendingReset)
                     {
-                        await db.Database.ExecuteSqlRawAsync($"TRUNCATE TABLE {tableName}");
+                        // Güvenlik: Sadece izin verilen tablo isimlerini çalıştır
+                        string? sql = tableName switch
+                        {
+                            "CostCalculations"     => "TRUNCATE TABLE CostCalculations",
+                            "OlizCampaigns"       => "TRUNCATE TABLE OlizCampaigns",
+                            "KeaProducts"         => "TRUNCATE TABLE KeaProducts",
+                            "WhiteGoodsProducts"  => "TRUNCATE TABLE WhiteGoodsProducts",
+                            _ => null
+                        };
+
+                        if (sql != null)
+                        {
+                            await db.Database.ExecuteSqlRawAsync(sql);
+                        }
                     }
                 }
                 ShowToast("Seçili tablolar başarıyla sıfırlandı.");

@@ -110,5 +110,13 @@
                         Height="32" Padding="12,0" Margin="16,0,0,0" Click="BtnNext_Click"/>
             </StackPanel>
         </Border>
+        
+        <!-- Loading Overlay -->
+        <Grid x:Name="OverlayLoading" Grid.RowSpan="4" Background="#AAFFFFFF" Visibility="Collapsed">
+            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" IsIndeterminate="True" Width="40" Height="40" Foreground="#E02020" HorizontalAlignment="Center"/>
+                <TextBlock Text="Veriler Yükleniyor..." Margin="0,12,0,0" FontWeight="SemiBold" Foreground="#1C2B4A"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </UserControl>

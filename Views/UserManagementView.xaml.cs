@@ -71,7 +71,7 @@ namespace ArcelikExcelApp.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Kullanıcılar yüklenirken hata: {ex.Message}");
+                await ModernDialogService.ShowAsync("Hata", $"Kullanıcılar yüklenirken hata oluştu: {ex.Message}", ModernDialogType.Error);
             }
         }
 

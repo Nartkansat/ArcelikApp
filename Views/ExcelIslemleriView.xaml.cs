@@ -98,6 +98,13 @@ namespace ArcelikExcelApp.Views
             if (selectedItem?.Content?.ToString() != "Oliz Kampanya") return;
 
             CmbWorksheet.Items.Clear();
+
+            if (FileHelper.IsFileLocked(_selectedFilePath))
+            {
+                MainSnackbar.MessageQueue?.Enqueue("⚠️ Excel dosyası açık olduğu için sayfalar okunamadı.");
+                return;
+            }
+
             try
             {
                 using var package = new ExcelPackage(new FileInfo(_selectedFilePath));
@@ -155,6 +162,13 @@ namespace ArcelikExcelApp.Views
                 whiteGoodsType = CmbWhiteGoodsType.SelectedItem.ToString()!;
             }
 
+            // Dosya kilitli mi kontrolü (Excel'de açıksa hata verir)
+            if (FileHelper.IsFileLocked(_selectedFilePath))
+            {
+                MainSnackbar.MessageQueue?.Enqueue("⚠️ Seçilen Excel dosyası şu an açık! Lütfen dosyayı kapatıp tekrar deneyin.");
+                return;
+            }
+
             LoadingOverlay.Visibility = Visibility.Visible;
             BtnUpload.IsEnabled       = false;
 
@@ -179,6 +193,8 @@ namespace ArcelikExcelApp.Views
                     };
                     context.UploadedFiles.Add(newFile);
                     context.SaveChanges();
+
+                    // ilgili excell açıksa program hatası verir. burada bir sorgu
 
                     // İşleme için artık kopyalanan dosyayı kullanabiliriz
                     string absoluteStoragePath = FileHelper.GetAbsolutePath(relativePath);
