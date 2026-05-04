@@ -1,5 +1,6 @@
 using ArcelikApp.Data;
 using ArcelikApp.Services;
+using ArcelikApp.Models;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
@@ -162,7 +163,7 @@ namespace ArcelikExcelApp.Views
         private async void BtnLogin_Click(object sender, RoutedEventArgs e)
         {
             string username = TxtUsername.Text.Trim();
-            string password = TxtPassword.Password;
+            string password = TxtPasswordVisible.IsVisible ? TxtPasswordVisible.Text : TxtPassword.Password;
             string license = TxtLicenseKey.Text.Trim();
             bool remember = ChkRememberMe.IsChecked ?? false;
 
@@ -186,6 +187,16 @@ namespace ArcelikExcelApp.Views
                 main.Show();
                 this.Close();
             }
+            else if (result.NeedsAgreementAcceptance && result.User != null)
+            {
+                // Yeni sözleşme onayı gerekiyor
+                _tempUserForAgreement = result.User;
+                _currentAgreementId = result.LatestAgreementId ?? 0;
+                _isEnforcedAgreement = true;
+                
+                LnkAgreement_Click(null, null); // Sözleşmeyi aç
+                ShowError(result.Message);
+            }
             else
             {
                 if (result.NeedsActivation)
@@ -195,6 +206,9 @@ namespace ArcelikExcelApp.Views
                 ShowError(result.Message);
             }
         }
+
+        private User? _tempUserForAgreement;
+        private bool _isEnforcedAgreement = false;
 
         private void LnkForgotPassword_Click(object sender, RoutedEventArgs e)
         {
@@ -210,7 +224,7 @@ namespace ArcelikExcelApp.Views
         {
             string username = TxtResetUsername.Text.Trim();
             string license = TxtResetLicense.Text.Trim();
-            string newPass = TxtResetNewPassword.Password;
+            string newPass = TxtResetNewPasswordVisible.IsVisible ? TxtResetNewPasswordVisible.Text : TxtResetNewPassword.Password;
 
             if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(license) || string.IsNullOrEmpty(newPass))
             {
@@ -266,40 +280,231 @@ namespace ArcelikExcelApp.Views
             TxtResetError.Visibility = Visibility.Visible;
         }
 
-        private void BtnShowPassword_Checked(object sender, RoutedEventArgs e)
+        // --- Login Password Show/Hide ---
+        private void BtnShowPassword_Click(object sender, RoutedEventArgs e)
         {
-            TxtPasswordVisible.Text = TxtPassword.Password;
-            TxtPassword.Visibility = Visibility.Collapsed;
-            TxtPasswordVisible.Visibility = Visibility.Visible;
-            TxtPasswordVisible.Focus();
-            if (TxtPasswordVisible.Text.Length > 0)
+            if (TxtPassword.Visibility == Visibility.Visible)
+            {
+                TxtPasswordVisible.Text = TxtPassword.Password;
+                TxtPassword.Visibility = Visibility.Collapsed;
+                TxtPasswordVisible.Visibility = Visibility.Visible;
+                IconShowPassword.Kind = MaterialDesignThemes.Wpf.PackIconKind.EyeOutline;
+                IconShowPassword.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E02020"));
+                TxtPasswordVisible.Focus();
                 TxtPasswordVisible.CaretIndex = TxtPasswordVisible.Text.Length;
+            }
+            else
+            {
+                TxtPassword.Password = TxtPasswordVisible.Text;
+                TxtPasswordVisible.Visibility = Visibility.Collapsed;
+                TxtPassword.Visibility = Visibility.Visible;
+                IconShowPassword.Kind = MaterialDesignThemes.Wpf.PackIconKind.EyeOffOutline;
+                IconShowPassword.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8"));
+                TxtPassword.Focus();
+            }
         }
 
-        private void BtnShowPassword_Unchecked(object sender, RoutedEventArgs e)
+        // --- Registration Logic ---
+        private void BtnRegShowPassword_Click(object sender, RoutedEventArgs e)
         {
-            TxtPassword.Password = TxtPasswordVisible.Text;
-            TxtPasswordVisible.Visibility = Visibility.Collapsed;
-            TxtPassword.Visibility = Visibility.Visible;
-            TxtPassword.Focus();
+            if (TxtRegPassword.Visibility == Visibility.Visible)
+            {
+                TxtRegPasswordVisible.Text = TxtRegPassword.Password;
+                TxtRegPassword.Visibility = Visibility.Collapsed;
+                TxtRegPasswordVisible.Visibility = Visibility.Visible;
+                IconRegShowPassword.Kind = MaterialDesignThemes.Wpf.PackIconKind.EyeOutline;
+                IconRegShowPassword.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E02020"));
+                TxtRegPasswordVisible.Focus();
+                TxtRegPasswordVisible.CaretIndex = TxtRegPasswordVisible.Text.Length;
+            }
+            else
+            {
+                TxtRegPassword.Password = TxtRegPasswordVisible.Text;
+                TxtRegPasswordVisible.Visibility = Visibility.Collapsed;
+                TxtRegPassword.Visibility = Visibility.Visible;
+                IconRegShowPassword.Kind = MaterialDesignThemes.Wpf.PackIconKind.EyeOffOutline;
+                IconRegShowPassword.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8"));
+                TxtRegPassword.Focus();
+            }
         }
 
-        private void BtnShowResetPassword_Checked(object sender, RoutedEventArgs e)
+        private void BtnRegShowPasswordConfirm_Click(object sender, RoutedEventArgs e)
         {
-            TxtResetNewPasswordVisible.Text = TxtResetNewPassword.Password;
-            TxtResetNewPassword.Visibility = Visibility.Collapsed;
-            TxtResetNewPasswordVisible.Visibility = Visibility.Visible;
-            TxtResetNewPasswordVisible.Focus();
-            if (TxtResetNewPasswordVisible.Text.Length > 0)
+            if (TxtRegPasswordConfirm.Visibility == Visibility.Visible)
+            {
+                TxtRegPasswordConfirmVisible.Text = TxtRegPasswordConfirm.Password;
+                TxtRegPasswordConfirm.Visibility = Visibility.Collapsed;
+                TxtRegPasswordConfirmVisible.Visibility = Visibility.Visible;
+                IconRegShowPasswordConfirm.Kind = MaterialDesignThemes.Wpf.PackIconKind.EyeOutline;
+                IconRegShowPasswordConfirm.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E02020"));
+                TxtRegPasswordConfirmVisible.Focus();
+                TxtRegPasswordConfirmVisible.CaretIndex = TxtRegPasswordConfirmVisible.Text.Length;
+            }
+            else
+            {
+                TxtRegPasswordConfirm.Password = TxtRegPasswordConfirmVisible.Text;
+                TxtRegPasswordConfirmVisible.Visibility = Visibility.Collapsed;
+                TxtRegPasswordConfirm.Visibility = Visibility.Visible;
+                IconRegShowPasswordConfirm.Kind = MaterialDesignThemes.Wpf.PackIconKind.EyeOffOutline;
+                IconRegShowPasswordConfirm.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8"));
+                TxtRegPasswordConfirm.Focus();
+            }
+        }
+
+        private int _currentAgreementId = 0;
+
+        private async void LnkAgreement_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                using var db = new AppDbContext();
+                var agreement = db.Agreements.OrderByDescending(a => a.Id).FirstOrDefault();
+                
+                if (agreement != null)
+                {
+                    _currentAgreementId = agreement.Id;
+                    TxtAgreementVersion.Text = $"Kullanıcı Sözleşmesi ({agreement.Version})";
+                    TxtAgreementContent.Text = agreement.Content;
+                    AgreementOverlay.Visibility = Visibility.Visible;
+                }
+                else
+                {
+                    ShowRegError("Kullanıcı sözleşmesi sistemde bulunamadı.");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ShowRegError($"Sözleşme yüklenirken hata: {ex.Message}");
+            }
+        }
+
+        private void BtnCloseAgreement_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isEnforcedAgreement)
+            {
+                // Onay verilmediği için çıkış yap
+                Application.Current.Shutdown();
+                return;
+            }
+            AgreementOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private async void BtnAcceptAgreement_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isEnforcedAgreement && _tempUserForAgreement != null)
+            {
+                // Giriş akışında zorunlu onay
+                await Task.Run(() => AuthService.AcceptAgreement(_tempUserForAgreement.Id, _currentAgreementId));
+                
+                // Onay alındıktan sonra devam et
+                MainWindow main = new MainWindow();
+                main.Show();
+                this.Close();
+                return;
+            }
+
+            ChkAgreement.IsChecked = true;
+            AgreementOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private async void BtnRegister_Click(object sender, RoutedEventArgs e)
+        {
+            string username = TxtRegUsername.Text.Trim();
+            string dealerName = TxtRegDealerName.Text.Trim();
+            
+            string password = TxtRegPasswordVisible.IsVisible ? TxtRegPasswordVisible.Text : TxtRegPassword.Password;
+            string passwordConfirm = TxtRegPasswordConfirmVisible.IsVisible ? TxtRegPasswordConfirmVisible.Text : TxtRegPasswordConfirm.Password;
+
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(dealerName) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(passwordConfirm))
+            {
+                ShowRegError("Lütfen tüm alanları doldurun.");
+                return;
+            }
+
+            if (password != passwordConfirm)
+            {
+                ShowRegError("Şifreler uyuşmuyor.");
+                return;
+            }
+
+            if (password.Length < 6)
+            {
+                ShowRegError("Şifre en az 6 karakter olmalıdır.");
+                return;
+            }
+
+            if (ChkAgreement.IsChecked != true || _currentAgreementId == 0)
+            {
+                ShowRegError("Kayıt olmak için kullanıcı sözleşmesini okuyup kabul etmelisiniz.");
+                return;
+            }
+
+            BtnRegister.IsEnabled = false;
+            TxtRegError.Visibility = Visibility.Collapsed;
+
+            var result = await Task.Run(() => AuthService.Register(username, dealerName, password, _currentAgreementId));
+
+            BtnRegister.IsEnabled = true;
+
+            if (result.Success)
+            {
+                ShowToast("Kayıt başarılı! Giriş yaparak lisansınızı etkinleştirebilirsiniz.");
+                TxtRegUsername.Text = "";
+                TxtRegDealerName.Text = "";
+                TxtRegPassword.Password = "";
+                TxtRegPasswordVisible.Text = "";
+                TxtRegPasswordConfirm.Password = "";
+                TxtRegPasswordConfirmVisible.Text = "";
+                ChkAgreement.IsChecked = false;
+            }
+            else
+            {
+                ShowRegError(result.Message);
+            }
+        }
+
+        private void ShowRegError(string message)
+        {
+            TxtRegError.Text = message;
+            TxtRegError.Visibility = Visibility.Visible;
+        }
+
+        private void BtnSwitchToRegister_Click(object sender, RoutedEventArgs e)
+        {
+            ViewLogin.Visibility = Visibility.Collapsed;
+            ViewRegister.Visibility = Visibility.Visible;
+            TxtRegError.Visibility = Visibility.Collapsed;
+        }
+
+        private void BtnSwitchToLogin_Click(object sender, RoutedEventArgs e)
+        {
+            ViewRegister.Visibility = Visibility.Collapsed;
+            ViewLogin.Visibility = Visibility.Visible;
+            TxtError.Visibility = Visibility.Collapsed;
+        }
+
+        // --- Reset Password Show/Hide ---
+        private void BtnShowResetPassword_Click(object sender, RoutedEventArgs e)
+        {
+            if (TxtResetNewPassword.Visibility == Visibility.Visible)
+            {
+                TxtResetNewPasswordVisible.Text = TxtResetNewPassword.Password;
+                TxtResetNewPassword.Visibility = Visibility.Collapsed;
+                TxtResetNewPasswordVisible.Visibility = Visibility.Visible;
+                IconShowResetPassword.Kind = MaterialDesignThemes.Wpf.PackIconKind.EyeOutline;
+                IconShowResetPassword.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#E02020"));
+                TxtResetNewPasswordVisible.Focus();
                 TxtResetNewPasswordVisible.CaretIndex = TxtResetNewPasswordVisible.Text.Length;
-        }
-
-        private void BtnShowResetPassword_Unchecked(object sender, RoutedEventArgs e)
-        {
-            TxtResetNewPassword.Password = TxtResetNewPasswordVisible.Text;
-            TxtResetNewPasswordVisible.Visibility = Visibility.Collapsed;
-            TxtResetNewPassword.Visibility = Visibility.Visible;
-            TxtResetNewPassword.Focus();
+            }
+            else
+            {
+                TxtResetNewPassword.Password = TxtResetNewPasswordVisible.Text;
+                TxtResetNewPasswordVisible.Visibility = Visibility.Collapsed;
+                TxtResetNewPassword.Visibility = Visibility.Visible;
+                IconShowResetPassword.Kind = MaterialDesignThemes.Wpf.PackIconKind.EyeOffOutline;
+                IconShowResetPassword.Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#94A3B8"));
+                TxtResetNewPassword.Focus();
+            }
         }
 
         private void ShowError(string message)

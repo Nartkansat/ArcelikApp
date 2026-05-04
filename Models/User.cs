@@ -9,6 +9,8 @@ namespace ArcelikApp.Models
         public string PasswordHash { get; set; } = string.Empty;
         public string Role { get; set; } = "User"; // "Admin" or "User"
         public string LicenseKey { get; set; } = string.Empty;
+        public DateTime? LicenseExpirationDate { get; set; }
+        public string DealerName { get; set; } = string.Empty;
         public bool IsActivated { get; set; } = false;
         public string? DeviceId { get; set; }
         

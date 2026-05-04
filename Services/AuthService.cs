@@ -35,6 +35,7 @@ namespace ArcelikApp.Services
                 // Aktivasyon başarılı
                 user.IsActivated = true;
                 user.DeviceId = currentDeviceId;
+                user.LicenseExpirationDate = DateTime.Now.AddYears(1);
             }
             else
             {
@@ -42,6 +43,19 @@ namespace ArcelikApp.Services
                 if (user.DeviceId != currentDeviceId)
                 {
                     return new LoginResult { Success = false, Message = "Bu hesap başka bir cihazda aktifleştirilmiş. Bu cihazda kullanılamaz." };
+                }
+
+                // Lisans Süresi Kontrolü
+                if (user.LicenseExpirationDate.HasValue && user.LicenseExpirationDate.Value < DateTime.Now)
+                {
+                    if (string.IsNullOrEmpty(licenseKey))
+                        return new LoginResult { Success = false, Message = "Lisans süreniz dolmuştur. Lütfen yeni bir lisans anahtarı giriniz.", NeedsActivation = true };
+                    
+                    if (user.LicenseKey != licenseKey)
+                        return new LoginResult { Success = false, Message = "Geçersiz lisans anahtarı." };
+                    
+                    // Yeni lisans aktif
+                    user.LicenseExpirationDate = DateTime.Now.AddYears(1);
                 }
             }
 
@@ -76,6 +90,20 @@ namespace ArcelikApp.Services
 
             CurrentUser = user;
             SessionId = newSessionId;
+
+            // Sözleşme kontrolü
+            if (MustAcceptLatestAgreement(user.Id))
+            {
+                var latest = GetLatestAgreement();
+                return new LoginResult 
+                { 
+                    Success = false, 
+                    Message = "Yeni bir kullanıcı sözleşmesi yayınlandı. Devam etmek için onaylamanız gerekmektedir.",
+                    NeedsAgreementAcceptance = true,
+                    LatestAgreementId = latest?.Id,
+                    User = user 
+                };
+            }
 
             return new LoginResult { Success = true, User = user };
         }
@@ -143,6 +171,28 @@ namespace ArcelikApp.Services
         public static void CreateInitialAdmin()
         {
             using var db = new AppDbContext();
+            
+            // Create initial agreement if none exists
+            if (!db.Agreements.Any())
+            {
+                var agreement = new Agreement
+                {
+                    Version = "v1.0",
+                    Content = "Synctool Kullanıcı Sözleşmesi\n\n" +
+                              "1. Taraflar\n" +
+                              "Bu sözleşme, Synctool uygulamasını kullanan kişi/kurum (bundan böyle 'Kullanıcı' olarak anılacaktır) ile uygulama sahibi arasında akdedilmiştir.\n\n" +
+                              "2. Kullanım Koşulları\n" +
+                              "Kullanıcı, uygulamayı yalnızca yasal amaçlar için ve sözleşme şartlarına uygun olarak kullanmayı kabul eder.\n\n" +
+                              "3. Gizlilik ve Veri Güvenliği\n" +
+                              "Kullanıcıya ait bilgiler üçüncü şahıslarla paylaşılmayacaktır. Tüm veriler şifrelenerek saklanmaktadır.\n\n" +
+                              "4. Lisans Süresi ve İptali\n" +
+                              "Lisans anahtarları aksi belirtilmedikçe 1 yıl geçerlidir. Süre bitiminde yeni lisans alınması gerekmektedir.\n\n" +
+                              "Tarih: " + DateTime.Now.ToString("dd.MM.yyyy")
+                };
+                db.Agreements.Add(agreement);
+                db.SaveChanges();
+            }
+
             if (!db.Users.Any())
             {
                 var admin = new User
@@ -151,7 +201,9 @@ namespace ArcelikApp.Services
                     PasswordHash = SecurityHelper.HashPassword("admin123"),
                     Role = "Admin",
                     LicenseKey = "ADMIN-KEY-001",
-                    IsActive = true
+                    IsActive = true,
+                    IsActivated = true,
+                    LicenseExpirationDate = DateTime.Now.AddYears(10)
                 };
                 db.Users.Add(admin);
                 db.SaveChanges();
@@ -169,6 +221,87 @@ namespace ArcelikApp.Services
             db.SaveChanges();
             return true;
         }
+
+        public static RegisterResult Register(string username, string dealerName, string password, int agreementId)
+        {
+            using var db = new AppDbContext();
+            if (db.Users.Any(u => u.Username == username))
+            {
+                return new RegisterResult { Success = false, Message = "Bu kullanıcı adı zaten alınmış." };
+            }
+
+            var newUser = new User
+            {
+                Username = username,
+                DealerName = dealerName,
+                PasswordHash = SecurityHelper.HashPassword(password),
+                Role = "User",
+                IsActive = true,
+                IsActivated = false
+            };
+
+            db.Users.Add(newUser);
+            db.SaveChanges(); // to get the new User ID
+
+            AcceptAgreement(newUser.Id, agreementId);
+
+            return new RegisterResult { Success = true };
+        }
+
+        public static bool MustAcceptLatestAgreement(int userId)
+        {
+            using var db = new AppDbContext();
+            var latestAgreement = db.Agreements.OrderByDescending(a => a.Id).FirstOrDefault();
+            if (latestAgreement == null) return false;
+
+            var userConsent = db.UserConsents.FirstOrDefault(c => c.UserId == userId && c.AgreementId == latestAgreement.Id);
+            return userConsent == null;
+        }
+
+        public static Agreement? GetLatestAgreement()
+        {
+            using var db = new AppDbContext();
+            return db.Agreements.OrderByDescending(a => a.Id).FirstOrDefault();
+        }
+
+        public static bool AcceptAgreement(int userId, int agreementId)
+        {
+            using var db = new AppDbContext();
+            // Check if already accepted
+            if (db.UserConsents.Any(c => c.UserId == userId && c.AgreementId == agreementId))
+                return true;
+
+            var consent = new UserConsent
+            {
+                UserId = userId,
+                AgreementId = agreementId,
+                AcceptedAt = DateTime.Now,
+                IpAddress = SecurityHelper.GetLocalIPAddress()
+            };
+            db.UserConsents.Add(consent);
+            db.SaveChanges();
+            return true;
+        }
+
+        public static bool SaveNewAgreement(string version, string content)
+        {
+            using var db = new AppDbContext();
+            var agreement = new Agreement
+            {
+                Version = version,
+                Content = content,
+                CreatedAt = DateTime.Now
+            };
+            db.Agreements.Add(agreement);
+            db.SaveChanges();
+            return true;
+        }
+    }
+
+    public class RegisterResult
+    {
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
     }
 
     public class LoginResult
@@ -176,6 +309,8 @@ namespace ArcelikApp.Services
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
         public bool NeedsActivation { get; set; }
+        public bool NeedsAgreementAcceptance { get; set; }
+        public int? LatestAgreementId { get; set; }
         public User? User { get; set; }
     }
 }

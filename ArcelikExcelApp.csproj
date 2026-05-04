@@ -6,28 +6,30 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Başlıksız-1 (1).ico</ApplicationIcon>
+    <ApplicationIcon>Assets\synctoolRedYazısız.ico</ApplicationIcon>
     <StartupObject></StartupObject>
-    <Version>2.0.1</Version>
+    <Version>2.0.2</Version>
+    <AssemblyName>synctool</AssemblyName>
+    <Product>synctool</Product>
+    <Title>synctool</Title>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Başlıksız-1 (1).ico" />
+    <None Remove="Assets\synctool.png" />
+    <None Remove="Assets\synctoolAppIcon.png" />
+    <None Remove="Assets\synctoolRed.png" />
+    <None Remove="Assets\synctoolRedYazısız.ico" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="Assets\AppIcon.png" />
-    <Resource Include="arcelik_beyaz_white.png" />
-    <Resource Include="arcelik-logo-1.svg" />
-    <Resource Include="Assets\ArcelikTurkishBigCaps.ttf">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
-    <None Update="Assets\AppIcon.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="arcelik_beyaz_white.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <Content Include="Assets\synctoolRedYazısız.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\synctool.png" />
+    <Resource Include="Assets\synctoolAppIcon.png" />
+    <Resource Include="Assets\synctoolRed.png" />
+    <Resource Include="Assets\synctoolRedYazısız.ico" />
   </ItemGroup>
 
   <ItemGroup>

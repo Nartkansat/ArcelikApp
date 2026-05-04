@@ -146,7 +146,7 @@
                                 <Border Width="40" Height="40" CornerRadius="10" Background="#F0FDF4">
                                     <materialDesign:PackIcon Kind="TicketPercent" Width="24" Height="24" Foreground="#16A34A" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                 </Border>
-                                <TextBlock Text="Oliz Kampanyaları" FontSize="16" FontWeight="SemiBold" Foreground="#2B3674" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="Kampanyalar" FontSize="16" FontWeight="SemiBold" Foreground="#2B3674" Margin="12,0,0,0" VerticalAlignment="Center"/>
                             </StackPanel>
                             <TextBlock Text="Toplam Aktif Kampanya" FontSize="13" Foreground="#A3AED0"/>
                             <TextBlock x:Name="TxtTotalCampaigns" Text="0" FontSize="28" FontWeight="Bold" Foreground="#2B3674" Margin="0,4,0,16"/>

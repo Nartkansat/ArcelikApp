@@ -118,14 +118,46 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Data Management Section (Moved Inside ScrollViewer) -->
+                <!-- Agreement Management (Admin Only) -->
+                <materialDesign:Card x:Name="CardAgreementManagement" UniformCornerRadius="20" Background="White" Padding="35" Margin="0,0,0,25" Visibility="Collapsed">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
+                            <materialDesign:PackIcon Kind="FileDocumentEditOutline" Width="26" Height="26" Foreground="#E02020" VerticalAlignment="Center"/>
+                            <TextBlock Text="Kullanıcı Sözleşmesi Yönetimi" FontSize="20" FontWeight="Bold" Foreground="#1A1A24" VerticalAlignment="Center" Margin="15,0,0,0"/>
+                        </StackPanel>
+
+                        <TextBlock Text="Yeni bir sözleşme yayınladığınızda, tüm kullanıcıların (mevcut kullanıcılar dahil) bir sonraki girişlerinde bu sözleşmeyi onaylaması zorunlu olacaktır." 
+                                 FontSize="14" Foreground="#7E84A3" Margin="0,0,0,20" TextWrapping="Wrap"/>
+
+                        <TextBox x:Name="TxtAgreementVersion" 
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="Sözleşme Versiyonu (Örn: v1.1)"
+                                 Margin="0,0,0,15" Height="50" VerticalContentAlignment="Center"/>
+
+                        <TextBox x:Name="TxtAgreementContent" 
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="Sözleşme İçeriği"
+                                 AcceptsReturn="True" TextWrapping="Wrap"
+                                 VerticalScrollBarVisibility="Auto"
+                                 MinHeight="200" Margin="0,0,0,20" Padding="10"/>
+
+                        <Button x:Name="BtnSaveAgreement" Content="Yeni Sözleşmeyi Yayınla" 
+                                Height="50" Background="#E02020" Foreground="White" 
+                                FontWeight="Bold" materialDesign:ButtonAssist.CornerRadius="10"
+                                Click="BtnSaveAgreement_Click"/>
+                    </StackPanel>
+                </materialDesign:Card>
+
+                <!-- Data Management Section -->
+
+
                 <materialDesign:Card x:Name="CardDataManagement" UniformCornerRadius="20" Background="White" Padding="35" Margin="0,25,0,25">
                     <StackPanel>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,30">
                             <materialDesign:PackIcon Kind="DatabaseRefresh" Width="26" Height="26" Foreground="#E02020" VerticalAlignment="Center"/>
                             <TextBlock Text="Veri Yönetimi ve Sıfırlama" FontSize="20" FontWeight="Bold" Foreground="#1A1A24" VerticalAlignment="Center" Margin="15,0,0,0"/>
                         </StackPanel>
-
+                        
                         <TextBlock Text="Seçili tabloları kalıcı olarak sıfırlayabilirsiniz (TRUNCATE). Bu işlem tüm verileri siler ve ID'leri 1'den başlatır. Bu işlem geri alınamaz." 
                                  FontSize="14" Foreground="#7E84A3" Margin="0,0,0,20" TextWrapping="Wrap"/>
 

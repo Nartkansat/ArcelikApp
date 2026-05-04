@@ -3,6 +3,7 @@ using ArcelikApp.Models;
 using ArcelikApp.Services;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows;
@@ -15,14 +16,58 @@ namespace ArcelikExcelApp.Views
     {
         private List<CostCalculation> _allData = new();
         private List<CostCalculation> _filteredData = new();
-        
+        private List<ValorSettingRow> _valorRows = new();
+
         private int _currentPage = 1;
         private int _pageSize = 50;
         private int _totalPages = 1;
 
+        // ViewModel for valor settings overlay
+        private class ValorSettingRow : INotifyPropertyChanged
+        {
+            // Paneli açtığımızdaki orijinal değer — değişen kategorileri tespit için
+            public string OriginalValorKey { get; set; } = "WholesalePrice60";
+            public string CategoryName { get; set; } = string.Empty;
+
+            private string _selectedValorKey = "WholesalePrice60";
+            public string SelectedValorKey
+            {
+                get => _selectedValorKey;
+                set
+                {
+                    _selectedValorKey = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(SelectedValorKey)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ValorLabel)));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HasChanged)));
+                }
+            }
+
+            public bool HasChanged => SelectedValorKey != OriginalValorKey;
+
+            public string ValorLabel =>
+                ValorSettingsService.ValorOptions.TryGetValue(_selectedValorKey, out var lbl)
+                    ? $"Aktif: {lbl}"
+                    : "Aktif: 60 Günlük";
+
+            public List<KeyValuePair<string, string>> ValorChoices { get; } =
+                ValorSettingsService.ValorOptions.ToList();
+
+            public event PropertyChangedEventHandler? PropertyChanged;
+        }
+
         public BeyazEsyaView()
         {
             InitializeComponent();
+
+            if (AuthService.CurrentUser != null)
+            {
+              
+                // Admin değilse admin bölümünü gizle
+                if (AuthService.CurrentUser.Role != "Admin")
+                {
+                    BtnOpenValorSettings.Visibility = Visibility.Collapsed;
+                }
+            }
         }
 
         private void UserControl_Loaded(object sender, RoutedEventArgs e)
@@ -141,7 +186,11 @@ namespace ArcelikExcelApp.Views
 
         private async void MenuItem_OpenExcel_Click(object sender, RoutedEventArgs e)
         {
-            if (GridBeyazEsya.SelectedItem is CostCalculation calc)
+            CostCalculation? calc = null;
+            if (sender is MenuItem) calc = GridBeyazEsya.SelectedItem as CostCalculation;
+            else if (sender is Button btn) calc = btn.DataContext as CostCalculation;
+
+            if (calc != null)
             {
                 try
                 {
@@ -210,7 +259,11 @@ namespace ArcelikExcelApp.Views
         }
         private async void MenuItem_OpenInArcelik_Click(object sender, RoutedEventArgs e)
         {
-            if (GridBeyazEsya.SelectedItem is CostCalculation calc)
+            CostCalculation? calc = null;
+            if (sender is MenuItem) calc = GridBeyazEsya.SelectedItem as CostCalculation;
+            else if (sender is Button btn) calc = btn.DataContext as CostCalculation;
+
+            if (calc != null)
             {
                 try
                 {
@@ -248,7 +301,11 @@ namespace ArcelikExcelApp.Views
 
         private async void MenuItem_ViewAllValors_Click(object sender, RoutedEventArgs e)
         {
-            if (GridBeyazEsya.SelectedItem is CostCalculation calc)
+            CostCalculation? calc = null;
+            if (sender is MenuItem) calc = GridBeyazEsya.SelectedItem as CostCalculation;
+            else if (sender is Button btn) calc = btn.DataContext as CostCalculation;
+
+            if (calc != null)
             {
                 try
                 {
@@ -411,5 +468,142 @@ namespace ArcelikExcelApp.Views
         {
             ValorDialogOverlay.Visibility = Visibility.Collapsed;
         }
+
+        // ── Valör Ayarları Panel ────────────────────────────────────────────────
+        private void BtnOpenValorSettings_Click(object sender, RoutedEventArgs e)
+        {
+            _valorRows = ValorSettingsService.WhiteGoodsCategories
+                .Select(cat =>
+                {
+                    var savedValor = ValorSettingsService.GetValor(cat);
+                    return new ValorSettingRow
+                    {
+                        CategoryName     = cat,
+                        OriginalValorKey = savedValor,
+                        SelectedValorKey = savedValor
+                    };
+                })
+                .ToList();
+
+            IcValorSettings.ItemsSource = null;
+            IcValorSettings.ItemsSource = _valorRows;
+            TxtValorSaved.Visibility = Visibility.Collapsed;
+            ValorSettingsOverlay.Visibility = Visibility.Visible;
+        }
+
+        private void BtnCloseValorSettings_Click(object sender, RoutedEventArgs e)
+        {
+            ValorSettingsOverlay.Visibility = Visibility.Collapsed;
+        }
+
+        private async void BtnSaveValorSettings_Click(object sender, RoutedEventArgs e)
+        {
+            // Değişen kategorileri bul
+            var changedRows = _valorRows.Where(r => r.HasChanged).ToList();
+
+            // Yeni ayarları diske kaydet
+            var settings = _valorRows.ToDictionary(r => r.CategoryName, r => r.SelectedValorKey);
+            ValorSettingsService.SaveAll(settings);
+
+            if (!changedRows.Any())
+            {
+                TxtValorSaved.Text = "✔ Değişen bir ayar yok.";
+                TxtValorSaved.Visibility = Visibility.Visible;
+                await Task.Delay(1500);
+                ValorSettingsOverlay.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            // Yükleniyor göstergesi
+            ValorSettingsOverlay.Visibility = Visibility.Collapsed;
+            OverlayLoading.Visibility = Visibility.Visible;
+
+            try
+            {
+                int totalUpdated = 0;
+
+                await Task.Run(() =>
+                {
+                    using var db = new AppDbContext();
+
+                    foreach (var row in changedRows)
+                    {
+                        string category  = row.CategoryName;
+                        string valorKey  = row.SelectedValorKey;
+
+                        // Bu kategorideki tüm WhiteGoodsProduct’ları al
+                        var wgProducts = db.WhiteGoodsProducts
+                            .Where(w => w.ExcelFileType == category)
+                            .ToList();
+
+                        if (!wgProducts.Any()) continue;
+
+                        var byId   = wgProducts.ToDictionary(w => w.Id.ToString());
+                        var byCode = wgProducts
+                            .GroupBy(w => w.ProductCode)
+                            .ToDictionary(g => g.Key, g => g.First());
+
+                        // Bu ürünlere ait CostCalculation kayıtlarını al
+                        var productIds   = byId.Keys.ToHashSet();
+                        var productCodes = byCode.Keys.ToHashSet();
+
+                        var calcs = db.CostCalculations
+                            .Where(c => c.SourceTable == "WhiteGoods" &&
+                                       (productIds.Contains(c.ProductId) ||
+                                        productCodes.Contains(c.ProductCode)))
+                            .ToList();
+
+                        foreach (var calc in calcs)
+                        {
+                            // WhiteGoodsProduct’ı bul
+                            WhiteGoodsProduct? wg = null;
+                            if (byId.TryGetValue(calc.ProductId, out var p1))   wg = p1;
+                            else if (byCode.TryGetValue(calc.ProductCode, out var p2)) wg = p2;
+                            if (wg == null) continue;
+
+                            decimal newPricePP = GetPriceFromValor(wg, valorKey);
+                            if (newPricePP == 0) continue; // Bu valör bu ürün için tanımlı değil
+
+                            calc.PricePPSource     = valorKey;
+                            calc.PricePP           = newPricePP;
+                            calc.PurchasePrice     = newPricePP - calc.PriceConversion;
+                            calc.CardPurchasePrice  = Math.Round(
+                                calc.PurchasePrice * (1 + calc.CardMarkupPercent / 100m), 2);
+
+                            totalUpdated++;
+                        }
+
+                        db.SaveChanges();
+                    }
+                });
+
+                // Ekranı yenile
+                await LoadDataAsync();
+
+                await ModernDialogService.ShowAsync(
+                    "Maliyet Güncellendi",
+                    $"{changedRows.Count} kategori için toplam {totalUpdated} kayıt yeni valöre göre yeniden hesaplandı ve güncellendi.",
+                    ModernDialogType.Success);
+            }
+            catch (Exception ex)
+            {
+                await ModernDialogService.ShowAsync("Hata",
+                    $"Güncelleme sırasında hata oluştu:\n{ex.Message}", ModernDialogType.Error);
+            }
+            finally
+            {
+                OverlayLoading.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private static decimal GetPriceFromValor(WhiteGoodsProduct wg, string valorKey) => valorKey switch
+        {
+            "WholesalePrice30"  => wg.WholesalePrice30  ?? 0m,
+            "WholesalePrice60"  => wg.WholesalePrice60  ?? 0m,
+            "WholesalePrice90"  => wg.WholesalePrice90  ?? 0m,
+            "WholesalePrice120" => wg.WholesalePrice120 ?? 0m,
+            "CashPrice"         => wg.CashPrice         ?? 0m,
+            _                   => wg.WholesalePrice60  ?? 0m
+        };
     }
 }

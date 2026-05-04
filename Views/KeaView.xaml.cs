@@ -142,7 +142,11 @@ namespace ArcelikExcelApp.Views
 
         private async void MenuItem_OpenExcel_Click(object sender, RoutedEventArgs e)
         {
-            if (GridKea.SelectedItem is CostCalculation calc)
+            CostCalculation? calc = null;
+            if (sender is MenuItem) calc = GridKea.SelectedItem as CostCalculation;
+            else if (sender is Button btn) calc = btn.DataContext as CostCalculation;
+
+            if (calc != null)
             {
                 try
                 {
@@ -212,7 +216,11 @@ namespace ArcelikExcelApp.Views
 
         private async void MenuItem_OpenInArcelik_Click(object sender, RoutedEventArgs e)
         {
-            if (GridKea.SelectedItem is CostCalculation calc)
+            CostCalculation? calc = null;
+            if (sender is MenuItem) calc = GridKea.SelectedItem as CostCalculation;
+            else if (sender is Button btn) calc = btn.DataContext as CostCalculation;
+
+            if (calc != null)
             {
                 try
                 {

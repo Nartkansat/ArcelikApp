@@ -263,9 +263,13 @@ namespace ArcelikExcelApp.Views
                         .ToList();
 
                     foreach (var wg in wgProducts)
+                    {
+                        // Her kategori kendi kayıtlı valörünü kullanır
+                        string wgValor = ValorSettingsService.GetValor(wg.ExcelFileType);
                         rows.Add(BuildRow(wg.Id.ToString(), wg.ProductCode, wg.Description, wg.ProductName, "Beyaz Eşya",
-                                          GetPricePPWG(wg, pricePPSource), pricePPSource,
+                                          GetPricePPWG(wg, wgValor), wgValor,
                                           markupPct, campaignLookup));
+                    }
                 }
 
                 if (!rows.Any())

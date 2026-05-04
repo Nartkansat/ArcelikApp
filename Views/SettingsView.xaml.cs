@@ -7,6 +7,9 @@ using System.Windows.Media.Animation;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
 using MaterialDesignThemes.Wpf;
 
 namespace ArcelikExcelApp.Views
@@ -25,15 +28,62 @@ namespace ArcelikExcelApp.Views
                 TxtDeviceId.Text = string.IsNullOrEmpty(AuthService.CurrentUser.DeviceId) ? "Cihaz Kaydı Bulunmuyor" : AuthService.CurrentUser.DeviceId;
 
                 // Yetki Kontrolü: Sadece Admin veri sıfırlama panelini görebilir
-                if (AuthService.CurrentUser.Role != "Admin")
+                if (AuthService.CurrentUser.Role == "Admin")
+                {
+                    CardDataManagement.Visibility = Visibility.Visible;
+                    CardAgreementManagement.Visibility = Visibility.Visible;
+
+                    // Mevcut sözleşmeyi yükle
+                    LoadCurrentAgreement();
+                }
+                else
                 {
                     CardDataManagement.Visibility = Visibility.Collapsed;
+                    CardAgreementManagement.Visibility = Visibility.Collapsed;
                 }
             }
             else
             {
                 // Kullanıcı oturumu yoksa (güvenlik için) paneli gizle
                 CardDataManagement.Visibility = Visibility.Collapsed;
+                CardAgreementManagement.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private async void LoadCurrentAgreement()
+        {
+            var latest = await Task.Run(() => AuthService.GetLatestAgreement());
+            if (latest != null)
+            {
+                TxtAgreementVersion.Text = latest.Version;
+                TxtAgreementContent.Text = latest.Content;
+            }
+        }
+
+        private async void BtnSaveAgreement_Click(object sender, RoutedEventArgs e)
+        {
+            string version = TxtAgreementVersion.Text.Trim();
+            string content = TxtAgreementContent.Text.Trim();
+
+            if (string.IsNullOrEmpty(version) || string.IsNullOrEmpty(content))
+            {
+                ShowError("Versiyon ve içerik boş bırakılamaz.");
+                return;
+            }
+
+            BtnSaveAgreement.IsEnabled = false;
+
+            bool success = await Task.Run(() => AuthService.SaveNewAgreement(version, content));
+
+            BtnSaveAgreement.IsEnabled = true;
+
+            if (success)
+            {
+                ShowToast("Yeni sözleşme başarıyla yayınlandı. Tüm kullanıcılar bir sonraki girişlerinde onaylamak zorunda kalacak.");
+            }
+            else
+            {
+                ShowError("Sözleşme kaydedilirken bir hata oluştu.");
             }
         }
 

@@ -2,10 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-        Title="Arçelik Giriş" Height="550" Width="400"
+        Title="Synctool Giriş" Height="750" Width="450"
         WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         WindowStartupLocation="CenterScreen" MouseLeftButtonDown="Window_MouseLeftButtonDown"
-        Icon="/Assets/AppIcon.png">
+        Icon="/Assets/synctoolAppIcon.png">
 
     <Border CornerRadius="20" Background="White">
         <Border.Effect>
@@ -13,18 +13,17 @@
         </Border.Effect>
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="180"/>
+                <RowDefinition Height="200"/>
                 <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Logo Area -->
             <Border Grid.Row="0" Background="#E02020" CornerRadius="20,20,0,0">
                 <StackPanel VerticalAlignment="Center">
-                    <Viewbox Width="60" Height="60" HorizontalAlignment="Center">
-                        <Path Data="{StaticResource ArcelikLogoGeometry}" Fill="White"/>
+                    <Viewbox Width="230" Height="Auto" Margin="10" HorizontalAlignment="Center">
+                        <Image Source="/Assets/synctool.png" RenderOptions.BitmapScalingMode="HighQuality" />
                     </Viewbox>
-                    <TextBlock Text="Arçelik" FontFamily="{StaticResource ArcelikFont}" FontSize="32" FontWeight="Bold" Foreground="White" HorizontalAlignment="Center" Margin="0,10,0,0"/>
-                    <TextBlock Text="Yönetim Sistemi" FontSize="14" Foreground="#FFCDD2" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Border>
 
@@ -36,100 +35,136 @@
                 <materialDesign:PackIcon Kind="Close" Foreground="White" Width="20" Height="20"/>
             </Button>
 
-            <!-- Login Form Area -->
+            <!-- Form Area -->
             <Grid Grid.Row="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
-
-                <ScrollViewer VerticalScrollBarVisibility="Auto" Grid.Row="0">
-                    <StackPanel Margin="40,20,40,10">
+                <!-- LOGIN VIEW -->
+                <ScrollViewer x:Name="ViewLogin" VerticalScrollBarVisibility="Auto" Visibility="Visible">
+                    <StackPanel Margin="40,60,40,10">
+                        <TextBlock Text="Giriş Yap" FontSize="24" FontWeight="Bold" Foreground="#1A1A24" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+                        
                         <TextBox x:Name="TxtUsername" 
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                  materialDesign:HintAssist.Hint="Kullanıcı Adı"
                                  materialDesign:TextFieldAssist.HasClearButton="True"
-                                 Margin="0,0,0,15"
-                                 Height="60"
-                                 VerticalContentAlignment="Center"/>
+                                 Margin="0,0,0,15" Height="50" VerticalContentAlignment="Center"/>
 
-                        <Grid Margin="0,0,0,15" Height="60">
+                        <Grid Margin="0,0,0,15" Height="50">
                             <PasswordBox x:Name="TxtPassword" 
                                          Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
                                          materialDesign:HintAssist.Hint="Şifre"
-                                         Padding="16,0,45,0"
-                                         VerticalContentAlignment="Center"
-                                         Height="60"/>
+                                         Padding="16,0,45,0" VerticalContentAlignment="Center" Height="50"/>
                             <TextBox x:Name="TxtPasswordVisible" 
                                      Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                      materialDesign:HintAssist.Hint="Şifre"
-                                     Visibility="Collapsed"
-                                     Padding="16,0,45,0"
-                                     VerticalContentAlignment="Center"
-                                     Height="60"/>
-                            <ToggleButton x:Name="BtnShowPassword" 
-                                          Cursor="Hand"
-                                          Focusable="False"
-                                          HorizontalAlignment="Right"
-                                          VerticalAlignment="Center"
-                                          Margin="0,0,12,0"
-                                          Width="30" Height="30"
-                                          Background="Transparent" BorderBrush="Transparent"
-                                          Checked="BtnShowPassword_Checked"
-                                          Unchecked="BtnShowPassword_Unchecked">
-                                <ToggleButton.Template>
-                                    <ControlTemplate TargetType="ToggleButton">
-                                        <Border Background="Transparent">
-                                            <ContentPresenter />
-                                        </Border>
-                                    </ControlTemplate>
-                                </ToggleButton.Template>
-                                <ToggleButton.Content>
-                                    <materialDesign:PackIcon Kind="EyeOffOutline" Width="22" Height="22" Foreground="#94A3B8"/>
-                                </ToggleButton.Content>
-                                <materialDesign:ToggleButtonAssist.OnContent>
-                                    <materialDesign:PackIcon Kind="EyeOutline" Width="22" Height="22" Foreground="#E02020"/>
-                                </materialDesign:ToggleButtonAssist.OnContent>
-                            </ToggleButton>
+                                     Visibility="Collapsed" Padding="16,0,45,0" VerticalContentAlignment="Center" Height="50"/>
+                            <Button x:Name="BtnShowPassword"
+                                    Style="{StaticResource MaterialDesignIconButton}"
+                                    Focusable="False" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0"
+                                    Width="30" Height="30" Click="BtnShowPassword_Click">
+                                <materialDesign:PackIcon x:Name="IconShowPassword" Kind="EyeOffOutline" Width="20" Height="20" Foreground="#94A3B8"/>
+                            </Button>
                         </Grid>
 
                         <TextBox x:Name="TxtLicenseKey" 
                                  Style="{StaticResource MaterialDesignOutlinedTextBox}"
                                  materialDesign:HintAssist.Hint="Lisans Anahtarı"
-                                 Visibility="Collapsed"
-                                 Margin="0,0,0,10"/>
+                                 Visibility="Collapsed" Margin="0,0,0,10" Height="50" VerticalContentAlignment="Center"/>
 
                         <CheckBox x:Name="ChkRememberMe" Content="Beni Hatırla (30 Gün)" 
                                   Foreground="#666A7D" Margin="0,0,0,15"/>
 
-                        <Button x:Name="BtnLogin" 
-                                Content="Giriş Yap" 
-                                Foreground="White"
-                                Height="50" 
-                                IsDefault="True"
-                                materialDesign:ButtonAssist.CornerRadius="10"
-                                Background="#E02020" BorderBrush="#E02020"
-                                FontSize="16" FontWeight="Bold"
-                                Click="BtnLogin_Click"/>
+                        <Button x:Name="BtnLogin" Content="Giriş Yap" Foreground="White" Height="45" IsDefault="True"
+                                materialDesign:ButtonAssist.CornerRadius="10" Background="#E02020" BorderBrush="#E02020"
+                                FontSize="16" FontWeight="Bold" Click="BtnLogin_Click"/>
 
-                        <TextBlock HorizontalAlignment="Center" Margin="0,12,0,0">
+                        <TextBlock HorizontalAlignment="Center" Margin="0,15,0,0">
                             <Hyperlink Click="LnkForgotPassword_Click" Foreground="#666A7D" TextDecorations="{x:Null}">Şifremi Unuttum</Hyperlink>
                         </TextBlock>
 
-                        <TextBlock x:Name="TxtError" 
-                                   Foreground="#D32F2F" 
-                                   FontSize="13" 
-                                   TextWrapping="Wrap" 
-                                   TextAlignment="Center" 
-                                   Margin="0,15,0,10" 
-                                   Visibility="Collapsed"
-                                   LineHeight="18"/>
+                        <TextBlock HorizontalAlignment="Center" Margin="0,20,0,0">
+                            <Run Text="Hesabınız yok mu?" Foreground="#666A7D"/>
+                            <Hyperlink Click="BtnSwitchToRegister_Click" Foreground="#E02020" FontWeight="Bold" TextDecorations="{x:Null}"> Kayıt Ol</Hyperlink>
+                        </TextBlock>
+
+                        <TextBlock x:Name="TxtError" Foreground="#D32F2F" FontSize="13" TextWrapping="Wrap" TextAlignment="Center" 
+                                   Margin="0,15,0,0" Visibility="Collapsed" LineHeight="18"/>
                     </StackPanel>
                 </ScrollViewer>
 
-                <TextBlock Grid.Row="1" VerticalAlignment="Bottom" HorizontalAlignment="Center" 
-                           Margin="0,0,0,15" Text="© 2026 Arçelik Maliyet Yönetim Sistemi" Foreground="#BDBDBD" FontSize="10"/>
+                <!-- REGISTER VIEW -->
+                <ScrollViewer x:Name="ViewRegister" VerticalScrollBarVisibility="Auto" Visibility="Collapsed">
+                    <StackPanel Margin="40,20,40,10">
+                        <TextBlock Text="Kayıt Ol" FontSize="24" FontWeight="Bold" Foreground="#1A1A24" HorizontalAlignment="Center" Margin="0,0,0,20"/>
+
+                        <TextBox x:Name="TxtRegUsername" 
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="Kullanıcı Adı"
+                                 Margin="0,0,0,15" Height="50" VerticalContentAlignment="Center"/>
+
+                        <TextBox x:Name="TxtRegDealerName" 
+                                 Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="Bayi Adı"
+                                 Margin="0,0,0,15" Height="50" VerticalContentAlignment="Center"/>
+
+                        <Grid Margin="0,0,0,15" Height="50">
+                            <PasswordBox x:Name="TxtRegPassword" 
+                                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                         materialDesign:HintAssist.Hint="Şifre"
+                                         Padding="16,0,45,0" VerticalContentAlignment="Center" Height="50"/>
+                            <TextBox x:Name="TxtRegPasswordVisible" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Şifre"
+                                     Visibility="Collapsed" Padding="16,0,45,0" VerticalContentAlignment="Center" Height="50"/>
+                            <Button x:Name="BtnRegShowPassword"
+                                    Style="{StaticResource MaterialDesignIconButton}"
+                                    Focusable="False" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0"
+                                    Width="30" Height="30" Click="BtnRegShowPassword_Click">
+                                <materialDesign:PackIcon x:Name="IconRegShowPassword" Kind="EyeOffOutline" Width="20" Height="20" Foreground="#94A3B8"/>
+                            </Button>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,15" Height="50">
+                            <PasswordBox x:Name="TxtRegPasswordConfirm" 
+                                         Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                         materialDesign:HintAssist.Hint="Şifre (Tekrar)"
+                                         Padding="16,0,45,0" VerticalContentAlignment="Center" Height="50"/>
+                            <TextBox x:Name="TxtRegPasswordConfirmVisible" 
+                                     Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Şifre (Tekrar)"
+                                     Visibility="Collapsed" Padding="16,0,45,0" VerticalContentAlignment="Center" Height="50"/>
+                            <Button x:Name="BtnRegShowPasswordConfirm"
+                                    Style="{StaticResource MaterialDesignIconButton}"
+                                    Focusable="False" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0"
+                                    Width="30" Height="30" Click="BtnRegShowPasswordConfirm_Click">
+                                <materialDesign:PackIcon x:Name="IconRegShowPasswordConfirm" Kind="EyeOffOutline" Width="20" Height="20" Foreground="#94A3B8"/>
+                            </Button>
+                        </Grid>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,15">
+                            <CheckBox x:Name="ChkAgreement" Foreground="#666A7D" VerticalAlignment="Center"/>
+                            <TextBlock VerticalAlignment="Center" Margin="5,0,0,0">
+                                <Hyperlink Click="LnkAgreement_Click" Foreground="#E02020" TextDecorations="{x:Null}">Kullanıcı Sözleşmesini</Hyperlink>
+                                <Run Text=" okudum."/>
+                            </TextBlock>
+                        </StackPanel>
+
+                        <Button x:Name="BtnRegister" Content="Kayıt Ol" Foreground="White" Height="45"
+                                materialDesign:ButtonAssist.CornerRadius="10" Background="#1A1A24" BorderBrush="#1A1A24"
+                                FontSize="16" FontWeight="Bold" Click="BtnRegister_Click"/>
+
+                        <TextBlock HorizontalAlignment="Center" Margin="0,20,0,0">
+                            <Run Text="Zaten hesabınız var mı?" Foreground="#666A7D"/>
+                            <Hyperlink Click="BtnSwitchToLogin_Click" Foreground="#E02020" FontWeight="Bold" TextDecorations="{x:Null}"> Giriş Yap</Hyperlink>
+                        </TextBlock>
+
+                        <TextBlock x:Name="TxtRegError" Foreground="#D32F2F" FontSize="13" TextWrapping="Wrap" TextAlignment="Center" 
+                                   Margin="0,15,0,0" Visibility="Collapsed" LineHeight="18"/>
+                    </StackPanel>
+                </ScrollViewer>
             </Grid>
+
+            <TextBlock Grid.Row="2" VerticalAlignment="Bottom" HorizontalAlignment="Center" 
+                       Margin="0,10,0,15" Text="© 2026 Synctool Maliyet Yönetim Sistemi" Foreground="#BDBDBD" FontSize="10"/>
 
             <Grid x:Name="ResetOverlay" Grid.RowSpan="2" Background="#CCF3F5F9" Visibility="Collapsed">
                 <materialDesign:Card Width="360" VerticalAlignment="Center" HorizontalAlignment="Center" UniformCornerRadius="20" Padding="0">
@@ -156,30 +191,12 @@
                                              Padding="16,0,45,0"
                                              VerticalContentAlignment="Center"
                                              Height="60"/>
-                                    <ToggleButton x:Name="BtnShowResetPassword" 
-                                                  Cursor="Hand"
-                                                  Focusable="False"
-                                                  HorizontalAlignment="Right"
-                                                  VerticalAlignment="Center"
-                                                  Margin="0,0,12,0"
-                                                  Width="30" Height="30"
-                                                  Background="Transparent" BorderBrush="Transparent"
-                                                  Checked="BtnShowResetPassword_Checked"
-                                                  Unchecked="BtnShowResetPassword_Unchecked">
-                                        <ToggleButton.Template>
-                                            <ControlTemplate TargetType="ToggleButton">
-                                                <Border Background="Transparent">
-                                                    <ContentPresenter />
-                                                </Border>
-                                            </ControlTemplate>
-                                        </ToggleButton.Template>
-                                        <ToggleButton.Content>
-                                            <materialDesign:PackIcon Kind="EyeOffOutline" Width="22" Height="22" Foreground="#94A3B8"/>
-                                        </ToggleButton.Content>
-                                        <materialDesign:ToggleButtonAssist.OnContent>
-                                            <materialDesign:PackIcon Kind="EyeOutline" Width="22" Height="22" Foreground="#E02020"/>
-                                        </materialDesign:ToggleButtonAssist.OnContent>
-                                    </ToggleButton>
+                                    <Button x:Name="BtnShowResetPassword"
+                                            Style="{StaticResource MaterialDesignIconButton}"
+                                            Focusable="False" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0"
+                                            Width="30" Height="30" Click="BtnShowResetPassword_Click">
+                                        <materialDesign:PackIcon x:Name="IconShowResetPassword" Kind="EyeOffOutline" Width="20" Height="20" Foreground="#94A3B8"/>
+                                    </Button>
                                 </Grid>
                                 
                                 <TextBlock x:Name="TxtResetError" Foreground="#D32F2F" FontSize="12" Margin="0,5,0,15" HorizontalAlignment="Center" Visibility="Collapsed" TextWrapping="Wrap" TextAlignment="Center"/>
@@ -248,6 +265,31 @@
                         </Border>
                     </materialDesign:Card>
                 </Grid>
+            </Grid>
+
+            <!-- Agreement Overlay -->
+            <Grid x:Name="AgreementOverlay" Grid.RowSpan="3" Background="#CCF3F5F9" Visibility="Collapsed">
+                <materialDesign:Card Width="400" Height="500" VerticalAlignment="Center" HorizontalAlignment="Center" UniformCornerRadius="20" Padding="0">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <Border Grid.Row="0" Background="#1A1A24" Padding="20">
+                            <TextBlock x:Name="TxtAgreementVersion" Text="Kullanıcı Sözleşmesi" Foreground="White" FontSize="18" FontWeight="Bold"/>
+                        </Border>
+                        <ScrollViewer Grid.Row="1" Margin="20">
+                            <TextBlock x:Name="TxtAgreementContent" TextWrapping="Wrap" Foreground="#333" FontSize="14" LineHeight="22"/>
+                        </ScrollViewer>
+                        <Border Grid.Row="2" Background="#F1F5F9" Padding="20">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                                <Button Content="Kapat" Style="{StaticResource MaterialDesignOutlinedButton}" Margin="0,0,10,0" Click="BtnCloseAgreement_Click"/>
+                                <Button x:Name="BtnAcceptAgreement" Content="Kabul Et" Background="#10B981" BorderBrush="#10B981" Foreground="White" Click="BtnAcceptAgreement_Click"/>
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </materialDesign:Card>
             </Grid>
         </Grid>
     </Border>

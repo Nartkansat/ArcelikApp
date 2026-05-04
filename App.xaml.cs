@@ -40,10 +40,20 @@ public partial class App : Application
         }
         catch { }
 
-        if (autoLoginSuccess)
+        if (autoLoginSuccess && AuthService.CurrentUser != null)
         {
-            var mainWindow = new MainWindow();
-            mainWindow.Show();
+            if (AuthService.MustAcceptLatestAgreement(AuthService.CurrentUser.Id))
+            {
+                // Must accept latest agreement - go to LoginWindow with a flag or it will check again
+                AuthService.Logout(); // Logout to force them through LoginWindow's agreement check
+                var loginWindow = new LoginWindow();
+                loginWindow.Show();
+            }
+            else
+            {
+                var mainWindow = new MainWindow();
+                mainWindow.Show();
+            }
         }
         else
         {

@@ -3,11 +3,11 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:converters="clr-namespace:ArcelikExcelApp.Converters"
-        Title="Arçelik - Gelişmiş Yönetim Paneli" Height="800" Width="1280"
+        Title="Synctool - Maliyet Hesaplama Aracı" Height="800" Width="1280"
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow"
         FontFamily="Segoe UI"
-        Icon="/Assets/AppIcon.png"
+        Icon="/Assets/synctoolRed.png"
         Background="#F4F6FA"
         TextElement.Foreground="#333333">
 
@@ -73,12 +73,12 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <Border Grid.Column="0" Width="45" Height="45" Background="#E02020" CornerRadius="12" HorizontalAlignment="Center" VerticalAlignment="Center">
-                        <Viewbox Width="28" Height="28" HorizontalAlignment="Center" VerticalAlignment="Center">
-                            <Path Data="{StaticResource ArcelikLogoGeometry}" Fill="White"/>
+                        <Viewbox Width="78" Height="78" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-10,0,0">
+                            <Image Source="/Assets/synctoolAppIcon.png" RenderOptions.BitmapScalingMode="HighQuality" />
                         </Viewbox>
                     </Border>
                     <!-- Sadece genişken yazıyı göster -->
-                    <TextBlock Grid.Column="1" Text="Arçelik" FontSize="32" FontFamily="{StaticResource ArcelikFont}" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"
+                    <TextBlock Grid.Column="1" Text="Synctool" FontSize="32" FontWeight="Bold" Foreground="White" VerticalAlignment="Center"
                                Visibility="{Binding IsChecked, ElementName=MenuToggleButton, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                 </Grid>
 

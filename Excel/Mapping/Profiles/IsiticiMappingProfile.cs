@@ -25,11 +25,11 @@ namespace ArcelikApp.Excel.Mapping.Profiles
                 { nameof(WhiteGoodsProduct.ProductName),       4  },  // D -> Model
 
                 // --- Toptan Fiyatlar ---
-                { nameof(WhiteGoodsProduct.CashPrice),         6  },  // F -> NAKİT
-                { nameof(WhiteGoodsProduct.WholesalePrice30),  7  },  // G -> 30 GÜN VADE
-                { nameof(WhiteGoodsProduct.WholesalePrice60),  8  },  // H -> 60 GÜN VADE
-                { nameof(WhiteGoodsProduct.WholesalePrice90),  9  },  // I -> 90 GÜN VADE
-                { nameof(WhiteGoodsProduct.WholesalePrice120), 10 }   // J -> 120 GÜN VADE
+                { nameof(WhiteGoodsProduct.CashPrice),         5  },  // E -> NAKİT
+                { nameof(WhiteGoodsProduct.WholesalePrice30),  6  },  // F -> 30 GÜN VADE
+                { nameof(WhiteGoodsProduct.WholesalePrice60),  7  },  // G -> 60 GÜN VADE
+                { nameof(WhiteGoodsProduct.WholesalePrice90),  8  },  // H -> 90 GÜN VADE
+                { nameof(WhiteGoodsProduct.WholesalePrice120), 9  }   // I -> 120 GÜN VADE
             }
         };
     }

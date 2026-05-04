@@ -15,6 +15,8 @@ namespace ArcelikApp.Data
         public DbSet<CostCalculation> CostCalculations { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Agreement> Agreements { get; set; }
+        public DbSet<UserConsent> UserConsents { get; set; }
 
         /// <summary>
         /// Son bağlantı durumunu tutar. True = bağlı, False = bağlantı yok.
