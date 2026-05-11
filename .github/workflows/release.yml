@@ -24,10 +24,10 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: Restore Dependencies
-      run: dotnet restore ArcelikExcelApp.csproj
+      run: dotnet restore Synctool.csproj
 
     - name: Build and Publish
-      run: dotnet publish ArcelikExcelApp.csproj -c Release -o publish --no-restore
+      run: dotnet publish Synctool.csproj -c Release -o publish --no-restore
 
     - name: Prepare Update Package
       shell: pwsh
