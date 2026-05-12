@@ -142,9 +142,9 @@
 
                                 <materialDesign:Card UniformCornerRadius="24" Background="#F1F5F9" Padding="24" materialDesign:ElevationAssist.Elevation="Dp0">
                                     <StackPanel>
-                                        <TextBlock Text="Cihaz Bilgisi" FontWeight="Bold" FontSize="16" Foreground="#1E293B" Margin="0,0,0,12"/>
-                                        <TextBlock Text="Bu hesap şu cihaza kilitlenmiştir:" FontSize="13" Foreground="#64748B" Margin="0,0,0,8"/>
-                                        <TextBlock x:Name="TxtDeviceId" Text="Cihaz Kimliği: Bekleniyor..." FontSize="12" Foreground="#334155" FontWeight="SemiBold" FontFamily="Consolas"/>
+                                        <TextBlock Text="Lisans Bilgisi" FontWeight="Bold" FontSize="16" Foreground="#1E293B" Margin="0,0,0,12"/>
+                                        <TextBlock Text="Hesabınız şu lisans anahtarı ile tanımlıdır:" FontSize="13" Foreground="#64748B" Margin="0,0,0,8"/>
+                                        <TextBlock x:Name="TxtLicenseKey" Text="Lisans Anahtarı: Bekleniyor..." FontSize="12" Foreground="#334155" FontWeight="SemiBold" FontFamily="Consolas"/>
                                     </StackPanel>
                                 </materialDesign:Card>
                             </StackPanel>
@@ -281,18 +281,7 @@
                 </Grid>
             </TabItem>
             
-            <!-- 4. Kullanıcı Yönetimi (Admin) -->
-            <TabItem x:Name="TabUserManagement" Visibility="Collapsed">
-                <TabItem.Header>
-                    <StackPanel Orientation="Horizontal">
-                        <materialDesign:PackIcon Kind="AccountSettingsOutline" Width="20" Height="20" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Kullanıcılar" FontSize="15" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    </StackPanel>
-                </TabItem.Header>
-                <Grid Margin="0,10,0,0">
-                    <views:UserManagementView/>
-                </Grid>
-            </TabItem>
+
         </TabControl>
 
         <!-- Modern Premium Toast Notification (Restored) -->

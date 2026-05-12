@@ -23,7 +23,7 @@
                 <materialDesign:PackIcon Kind="CoffeeMaker" Width="30" Height="30" Foreground="#FF6B6B" VerticalAlignment="Center"/>
                 <StackPanel Margin="12,0,0,0">
                     <TextBlock Text="Küçük Ev Aletleri (KEA) Maliyetleri" FontSize="20" FontWeight="Bold" Foreground="White"/>
-                    <TextBlock Text="Sisteme kaydedilmiş KEA maliyet hesaplamaları" FontSize="12" Foreground="#A0AEC0"/>
+                    <TextBlock Text="Sisteme kaydedilmiş KEA maliyet hesaplamaları sirkülerdeki 60 gün baz alarak hesaplanmıştır" FontSize="12" Foreground="#A0AEC0"/>
                 </StackPanel>
             </StackPanel>
         </Border>
@@ -91,7 +91,7 @@
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Ürün Kodu" Binding="{Binding ProductCode}" Width="130"/>
                     <DataGridTextColumn Header="Ürün Adı" Binding="{Binding ProductName}" Width="*"/>
-                    <DataGridTextColumn Header="Baz Fiyat" Binding="{Binding PricePP, StringFormat={}{0:N2} ₺}" Width="110"/>
+                    <DataGridTextColumn Header="Baz Fiyat (60 gün)" Binding="{Binding PricePP, StringFormat={}{0:N2} ₺}" Width="140"/>
                     <DataGridTextColumn Header="İndirim" Binding="{Binding PriceConversion, StringFormat={}{0:N2} ₺}" Width="100"/>
                     <DataGridTextColumn Header="Net Maliyet" Binding="{Binding PurchasePrice, StringFormat={}{0:N2} ₺}" Width="120">
                         <DataGridTextColumn.ElementStyle>

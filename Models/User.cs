@@ -11,8 +11,15 @@ namespace ArcelikApp.Models
         public string LicenseKey { get; set; } = string.Empty;
         public DateTime? LicenseExpirationDate { get; set; }
         public string DealerName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
         public bool IsActivated { get; set; } = false;
         public string? DeviceId { get; set; }
+        public string? HardwareCpuId { get; set; }
+        public string? HardwareMotherboardId { get; set; }
+        public string? HardwareDiskId { get; set; }
+
+        public string? PasswordResetCode { get; set; }
+        public DateTime? PasswordResetCodeExpiry { get; set; }
         
         public bool IsActive { get; set; } = true;
         

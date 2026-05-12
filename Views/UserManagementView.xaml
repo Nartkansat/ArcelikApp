@@ -131,7 +131,7 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
 
-                    <DataGridTextColumn Header="Son Aktivite" Binding="{Binding LastLoginDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="160">
+                    <DataGridTextColumn Header="Son Aktivite" Binding="{Binding LastLoginDate, StringFormat={}{0:dd.MM.yyyy HH:mm}}" Width="180">
                          <DataGridTextColumn.ElementStyle>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Foreground" Value="#7E84A3"/>
@@ -142,7 +142,7 @@
                         </DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
                     
-                    <DataGridTemplateColumn Header="Cihaz" Width="100">
+                    <DataGridTemplateColumn Header="Cihaz" Width="170">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" Margin="0,0" VerticalAlignment="Center">
@@ -157,12 +157,12 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="Hesap Durumu" Width="130">
+                    <DataGridTemplateColumn Header="Hesap Durumu" Width="170">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Border x:Name="StatusBadge" Padding="8,4" CornerRadius="8" HorizontalAlignment="Left">
+                                <Border x:Name="StatusBadge" Padding="10,4" CornerRadius="8" HorizontalAlignment="Left">
                                     <StackPanel Orientation="Horizontal">
-                                        <materialDesign:PackIcon x:Name="StatusIcon" Width="16" Height="16" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                                        <materialDesign:PackIcon x:Name="StatusIcon" Width="16" Height="16" VerticalAlignment="Center" Margin="2,0,6,0"/>
                                         <TextBlock x:Name="StatusText" FontSize="12" FontWeight="SemiBold" VerticalAlignment="Center"/>
                                     </StackPanel>
                                 </Border>
@@ -186,7 +186,16 @@
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
 
-                    <DataGridTemplateColumn Header="Aksiyon" Width="150">
+                    <DataGridTemplateColumn Header="Aksiyon"  Width="200">
+                        <DataGridTemplateColumn.HeaderStyle>
+                            <!-- Material Design'ın orijinal stilini temel alıyoruz -->
+                            <Style TargetType="DataGridColumnHeader" BasedOn="{StaticResource MaterialDesignDataGridColumnHeader}">
+                                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                                <Setter Property="VerticalContentAlignment" Value="Center" />
+                                <!-- Eğer margin/padding gerekiyorsa -->
+                                <Setter Property="Padding" Value="10,0,10,0" />
+                            </Style>
+                        </DataGridTemplateColumn.HeaderStyle>
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
@@ -201,6 +210,12 @@
                                             ToolTip="Kilidi Kaldır" Click="BtnUnlockUser_Click"
                                             Foreground="#4CAF50" Visibility="Collapsed">
                                         <materialDesign:PackIcon Kind="LockOpenOutline" Width="20" Height="20"/>
+                                    </Button>
+                                    <Button x:Name="BtnLock" Style="{StaticResource MaterialDesignIconButton}" 
+                                            Width="36" Height="36" Margin="0,0,2,0"
+                                            ToolTip="Hesabı Askıya Al" Click="BtnLockUser_Click"
+                                            Foreground="#F44336" Visibility="Visible">
+                                        <materialDesign:PackIcon Kind="LockOutline" Width="20" Height="20"/>
                                     </Button>
                                     <Button Style="{StaticResource MaterialDesignIconButton}" 
                                             Width="36" Height="36" Margin="0,0,2,0"
@@ -218,6 +233,7 @@
                                 <DataTemplate.Triggers>
                                     <DataTrigger Binding="{Binding IsLocked}" Value="True">
                                         <Setter TargetName="BtnUnlock" Property="Visibility" Value="Visible"/>
+                                        <Setter TargetName="BtnLock" Property="Visibility" Value="Collapsed"/>
                                     </DataTrigger>
                                 </DataTemplate.Triggers>
                             </DataTemplate>
@@ -227,7 +243,7 @@
             </DataGrid>
         </materialDesign:Card>
 
-        <!-- Ultra-Modern Dialog Overlay -->
+        <!-- Yeni Kullanıcı Dialog Overlay -->
         <Grid x:Name="DialogOverlay" Grid.RowSpan="3" Visibility="Collapsed">
             <Border Background="#111A1A24">
                 <Border.Effect>
@@ -235,7 +251,7 @@
                 </Border.Effect>
             </Border>
             <Grid Background="#22FFFFFF">
-            <materialDesign:Card Width="420" VerticalAlignment="Center" HorizontalAlignment="Center" 
+            <materialDesign:Card Width="440" VerticalAlignment="Center" HorizontalAlignment="Center" 
                                 UniformCornerRadius="25" Background="White">
                 <materialDesign:Card.Effect>
                     <DropShadowEffect Color="Black" BlurRadius="40" Opacity="0.2" Direction="270" ShadowDepth="10"/>
@@ -245,30 +261,62 @@
                         <Border Width="60" Height="60" Background="#FFEAEA" CornerRadius="30" Margin="0,0,0,20">
                             <materialDesign:PackIcon Kind="AccountPlus" Width="30" Height="30" Foreground="#E02020" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
-                        
-                        <TextBlock x:Name="TxtDialogTitle" Text="Yeni Kullanıcı Tanımla" FontSize="22" FontWeight="Bold" 
-                                   Foreground="#1A1A24" Margin="0,0,0,10" HorizontalAlignment="Center"/>
-                        <TextBlock Text="Kullanıcı detaylarını ve erişim yetkilerini belirleyin" FontSize="13" 
-                                   Foreground="#7E84A3" Margin="0,0,0,30" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Yeni Kullanıcı Ekle" FontSize="22" FontWeight="Bold" 
+                                   Foreground="#1A1A24" Margin="0,0,0,6" HorizontalAlignment="Center"/>
+                        <TextBlock Text="Kullanıcı bilgilerini ve erişim yetkisini belirleyin" FontSize="13" 
+                                   Foreground="#7E84A3" Margin="0,0,0,25" HorizontalAlignment="Center"/>
                         
                         <TextBox x:Name="TxtNewUsername" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 materialDesign:HintAssist.Hint="Kullanıcı Adı" Margin="0,0,0,15"
+                                 materialDesign:HintAssist.Hint="Kullanıcı Adı" Margin="0,0,0,12"
                                  materialDesign:TextFieldAssist.HasClearButton="True"/>
-                        
-                        <PasswordBox x:Name="TxtNewPassword" Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
-                                     materialDesign:HintAssist.Hint="Şifre" Margin="0,0,0,15"/>
-                        
+
+                        <TextBox x:Name="TxtNewEmail" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="E-Posta Adresi" Margin="0,0,0,12"
+                                 materialDesign:TextFieldAssist.HasClearButton="True"/>
+
+                        <TextBox x:Name="TxtNewDealerName" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                 materialDesign:HintAssist.Hint="Bayi Adı" Margin="0,0,0,12"
+                                 materialDesign:TextFieldAssist.HasClearButton="True"/>
+
+                        <Grid Margin="0,0,0,12" Height="56">
+                            <PasswordBox x:Name="TxtNewPassword" Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                         materialDesign:HintAssist.Hint="Şifre"
+                                         Padding="16,0,45,0" VerticalContentAlignment="Center" Height="56"/>
+                            <TextBox x:Name="TxtNewPasswordVisible" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Şifre"
+                                     Visibility="Collapsed" Padding="16,0,45,0" VerticalContentAlignment="Center" Height="56"/>
+                            <Button Style="{StaticResource MaterialDesignIconButton}" Focusable="False"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0"
+                                    Width="30" Height="30" Click="BtnAddShowPassword_Click">
+                                <materialDesign:PackIcon x:Name="IconAddShowPassword" Kind="EyeOffOutline" Width="20" Height="20" Foreground="#94A3B8"/>
+                            </Button>
+                        </Grid>
+
+                        <Grid Margin="0,0,0,12" Height="56">
+                            <PasswordBox x:Name="TxtNewPasswordConfirm" Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                         materialDesign:HintAssist.Hint="Şifre (Tekrar)"
+                                         Padding="16,0,45,0" VerticalContentAlignment="Center" Height="56"/>
+                            <TextBox x:Name="TxtNewPasswordConfirmVisible" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     materialDesign:HintAssist.Hint="Şifre (Tekrar)"
+                                     Visibility="Collapsed" Padding="16,0,45,0" VerticalContentAlignment="Center" Height="56"/>
+                            <Button Style="{StaticResource MaterialDesignIconButton}" Focusable="False"
+                                    HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0"
+                                    Width="30" Height="30" Click="BtnAddShowPasswordConfirm_Click">
+                                <materialDesign:PackIcon x:Name="IconAddShowPasswordConfirm" Kind="EyeOffOutline" Width="20" Height="20" Foreground="#94A3B8"/>
+                            </Button>
+                        </Grid>
+
                         <ComboBox x:Name="CmbRole" Style="{StaticResource MaterialDesignOutlinedComboBox}"
-                                  materialDesign:HintAssist.Hint="Yetki Rolü" Margin="0,0,0,15">
+                                  materialDesign:HintAssist.Hint="Yetki Rolü" Margin="0,0,0,12">
                             <ComboBoxItem Content="User" IsSelected="True"/>
                             <ComboBoxItem Content="Admin"/>
                         </ComboBox>
-                        
+
                         <TextBox x:Name="TxtNewLicenseKey" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 materialDesign:HintAssist.Hint="Lisans Anahtarı" Margin="0,0,0,10" 
+                                 materialDesign:HintAssist.Hint="Lisans Anahtarı (Otomatik)" Margin="0,0,0,10" 
                                  IsReadOnly="True" Foreground="#7E84A3"/>
                         
-                        <TextBlock x:Name="TxtUserError" Foreground="#D32F2F" FontSize="13" Margin="0,0,0,20" 
+                        <TextBlock x:Name="TxtUserError" Foreground="#D32F2F" FontSize="13" Margin="0,0,0,15" 
                                  HorizontalAlignment="Left" Visibility="Collapsed" TextWrapping="Wrap"/>
                         
                         <Grid>
@@ -285,7 +333,56 @@
                     </StackPanel>
                 </Border>
             </materialDesign:Card>
+            </Grid>
         </Grid>
+
+        <!-- Kullanıcı Düzenleme (Sadece Rol) Dialog Overlay -->
+        <Grid x:Name="EditUserDialogOverlay" Grid.RowSpan="3" Visibility="Collapsed">
+            <Border Background="#111A1A24">
+                <Border.Effect>
+                    <BlurEffect Radius="15"/>
+                </Border.Effect>
+            </Border>
+            <Grid Background="#22FFFFFF">
+            <materialDesign:Card Width="380" VerticalAlignment="Center" HorizontalAlignment="Center" 
+                                UniformCornerRadius="25" Background="White">
+                <materialDesign:Card.Effect>
+                    <DropShadowEffect Color="Black" BlurRadius="40" Opacity="0.2" Direction="270" ShadowDepth="10"/>
+                </materialDesign:Card.Effect>
+                <Border Padding="35">
+                    <StackPanel>
+                        <Border Width="60" Height="60" Background="#E8EAF6" CornerRadius="30" Margin="0,0,0,20">
+                            <materialDesign:PackIcon Kind="ShieldAccountOutline" Width="30" Height="30" Foreground="#3949AB" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBlock Text="Yetki Düzenle" FontSize="22" FontWeight="Bold" 
+                                   Foreground="#1A1A24" Margin="0,0,0,6" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="TxtEditUserSubtitle" Text="" FontSize="13" 
+                                   Foreground="#7E84A3" Margin="0,0,0,25" HorizontalAlignment="Center"/>
+
+                        <ComboBox x:Name="CmbEditRole" Style="{StaticResource MaterialDesignOutlinedComboBox}"
+                                  materialDesign:HintAssist.Hint="Yetki Rolü" Margin="0,0,0,15">
+                            <ComboBoxItem Content="User" IsSelected="True"/>
+                            <ComboBoxItem Content="Admin"/>
+                        </ComboBox>
+
+                        <TextBlock x:Name="TxtEditUserError" Foreground="#D32F2F" FontSize="13" Margin="0,0,0,15" 
+                                 HorizontalAlignment="Left" Visibility="Collapsed" TextWrapping="Wrap"/>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="1.5*"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="Vazgeç" Style="{StaticResource MaterialDesignFlatButton}" 
+                                    Click="BtnCancelEdit_Click" Foreground="#7E84A3" Height="48"/>
+                            <Button Grid.Column="1" Content="Kaydet" Foreground="White" Background="#3949AB" BorderBrush="#3949AB" 
+                                    materialDesign:ButtonAssist.CornerRadius="14" Height="48" FontWeight="SemiBold"
+                                    Click="BtnSaveEditUser_Click"/>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </materialDesign:Card>
+            </Grid>
         </Grid>
 
         <!-- Notification Dialog Overlay -->

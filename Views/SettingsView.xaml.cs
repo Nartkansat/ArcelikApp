@@ -25,14 +25,13 @@ namespace ArcelikExcelApp.Views
             {
                 TxtProfileName.Text = AuthService.CurrentUser.Username;
                 TxtProfileRole.Text = AuthService.CurrentUser.Role + " Yetkisi";
-                TxtDeviceId.Text = string.IsNullOrEmpty(AuthService.CurrentUser.DeviceId) ? "Cihaz Kaydı Bulunmuyor" : AuthService.CurrentUser.DeviceId;
+                TxtLicenseKey.Text = "Lisans: " + AuthService.CurrentUser.LicenseKey;
 
                 // Yetki Kontrolü: Sadece Admin veri sıfırlama panelini görebilir
                 if (AuthService.CurrentUser.Role == "Admin")
                 {
                     TabDataManagement.Visibility = Visibility.Visible;
                     TabAgreementManagement.Visibility = Visibility.Visible;
-                    TabUserManagement.Visibility = Visibility.Visible;
 
                     // Mevcut sözleşmeyi yükle
                     LoadCurrentAgreement();
@@ -41,7 +40,6 @@ namespace ArcelikExcelApp.Views
                 {
                     TabDataManagement.Visibility = Visibility.Collapsed;
                     TabAgreementManagement.Visibility = Visibility.Collapsed;
-                    TabUserManagement.Visibility = Visibility.Collapsed;
                 }
             }
             else
@@ -49,7 +47,6 @@ namespace ArcelikExcelApp.Views
                 // Kullanıcı oturumu yoksa (güvenlik için) paneli gizle
                 TabDataManagement.Visibility = Visibility.Collapsed;
                 TabAgreementManagement.Visibility = Visibility.Collapsed;
-                TabUserManagement.Visibility = Visibility.Collapsed;
             }
         }
 

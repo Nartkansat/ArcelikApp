@@ -10,9 +10,11 @@ namespace ArcelikApp.Services
 
         public static void CheckForUpdates()
         {
-            AutoUpdater.ShowRemindLaterButton = true;
-            AutoUpdater.ShowSkipButton = false;
+            AutoUpdater.ShowRemindLaterButton = false; // Hatırlat butonunu kaldır
+            AutoUpdater.ShowSkipButton = false;        // Atla butonunu kaldır
             AutoUpdater.RunUpdateAsAdmin = true;
+            AutoUpdater.Mandatory = true;               // Zorunlu güncelleme modu
+            AutoUpdater.UpdateMode = Mode.Forced;       // Güncelleme penceresi kapanınca uygulamayı da kapatır
             AutoUpdater.DownloadPath = Environment.CurrentDirectory;
             
             try 
@@ -21,7 +23,7 @@ namespace ArcelikApp.Services
             }
             catch (Exception)
             {
-                // Hata durumunda sessiz kalabilir veya bildirim verebilirsiniz.
+                // Hata durumunda (internet yoksa vb.) loglanabilir
             }
         }
     }

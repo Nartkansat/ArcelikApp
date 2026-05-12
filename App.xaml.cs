@@ -23,11 +23,8 @@ public partial class App : Application
 
         base.OnStartup(e);
 
-        // Güncelleme kontrolü (arka planda)
-        _ = Task.Run(() =>
-        {
-            try { UpdateService.CheckForUpdates(); } catch { }
-        });
+        // 1. Önce güncellemeleri kontrol et (Zorunlu mod)
+        try { UpdateService.CheckForUpdates(); } catch { }
 
         // WAMP kontrolünü arka planda başlat (UI'ı bloke etme)
         _ = Task.Run(() => EnsureWampRunningAsync());
@@ -36,7 +33,7 @@ public partial class App : Application
         bool autoLoginSuccess = false;
         try
         {
-            autoLoginSuccess = await Task.Run(() => ArcelikApp.Services.AuthService.CheckAutoLogin());
+            autoLoginSuccess = await ArcelikApp.Services.AuthService.CheckAutoLoginAsync();
         }
         catch { }
 

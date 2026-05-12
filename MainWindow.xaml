@@ -6,6 +6,7 @@
         Title="Synctool - Maliyet Hesaplama Aracı" Height="800" Width="1280"
         WindowStartupLocation="CenterScreen"
         WindowStyle="SingleBorderWindow"
+        WindowState="Maximized"
         FontFamily="Segoe UI"
         Icon="/Assets/synctoolRed.png"
         Background="#F4F6FA"

@@ -1,5 +1,6 @@
 using ArcelikApp.Data;
 using ArcelikApp.Models;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Linq;
 
@@ -10,10 +11,17 @@ namespace ArcelikApp.Services
         public static User? CurrentUser { get; private set; }
         public static string? SessionId { get; private set; }
 
-        public static LoginResult Login(string username, string password, string? licenseKey, bool rememberMe)
+        public static async System.Threading.Tasks.Task<LoginResult> LoginAsync(string username, string password, string? licenseKey, bool rememberMe)
         {
             using var db = new AppDbContext();
-            var user = db.Users.FirstOrDefault(u => u.Username == username);
+            
+            // Asenkron olarak veritabanı sorgusu ve donanım kimliği okuma işlemlerini paralel başlat
+            var userTask = db.Users.FirstOrDefaultAsync(u => u.Username == username);
+            var hwProfileTask = SecurityHelper.GetHardwareProfileAsync();
+            
+            await System.Threading.Tasks.Task.WhenAll(userTask, hwProfileTask);
+            var user = userTask.Result;
+            var currentProfile = hwProfileTask.Result;
 
             if (user == null)
                 return new LoginResult { Success = false, Message = "Kullanıcı adı veya şifre hatalı." };
@@ -30,19 +38,17 @@ namespace ArcelikApp.Services
                 if (user.FailedLoginAttempts >= 5)
                 {
                     user.IsLocked = true;
-                    db.SaveChanges();
+                    await db.SaveChangesAsync();
                     return new LoginResult { Success = false, Message = "Hesabınız 5 kez hatalı giriş denemesi nedeniyle askıya alınmıştır." };
                 }
                 
-                db.SaveChanges();
+                await db.SaveChangesAsync();
                 return new LoginResult { Success = false, Message = $"Kullanıcı adı veya şifre hatalı. (Kalan deneme hakkı: {5 - user.FailedLoginAttempts})" };
             }
 
             // Başarılı giriş - denemeleri sıfırla
             user.FailedLoginAttempts = 0;
-            user.IsLocked = false; // Güvenlik için sıfırla
-
-            string currentDeviceId = SecurityHelper.GetDeviceId();
+            user.IsLocked = false;
 
             // İlk Giriş / Aktivasyon Kontrolü
             if (!user.IsActivated)
@@ -53,17 +59,36 @@ namespace ArcelikApp.Services
                 if (user.LicenseKey != licenseKey)
                     return new LoginResult { Success = false, Message = "Geçersiz lisans anahtarı." };
 
-                // Aktivasyon başarılı
+                // Aktivasyon başarılı - Donanım profilini kaydet
                 user.IsActivated = true;
-                user.DeviceId = currentDeviceId;
+                user.HardwareCpuId = currentProfile.CpuId;
+                user.HardwareMotherboardId = currentProfile.MotherboardId;
+                user.HardwareDiskId = currentProfile.DiskId;
                 user.LicenseExpirationDate = DateTime.Now.AddYears(1);
             }
             else
             {
-                // Cihaz Kontrolü (Başka cihazda girilemez)
-                if (user.DeviceId != currentDeviceId)
+                // Cihaz Kontrolü (Toleranslı Hardware Match: 3 bileşenden en az 2'si eşleşmeli)
+                int matchCount = 0;
+                if (!string.IsNullOrEmpty(user.HardwareCpuId) && user.HardwareCpuId == currentProfile.CpuId) matchCount++;
+                if (!string.IsNullOrEmpty(user.HardwareMotherboardId) && user.HardwareMotherboardId == currentProfile.MotherboardId) matchCount++;
+                if (!string.IsNullOrEmpty(user.HardwareDiskId) && user.HardwareDiskId == currentProfile.DiskId) matchCount++;
+
+                // Eğer eski sistemden kalan DeviceId varsa (gelişmiş sisteme geçiş yapıyorsak) onu kabul edip yeni sisteme güncelleyelim
+                bool isLegacyMatch = !string.IsNullOrEmpty(user.DeviceId) && user.DeviceId == SecurityHelper.GetDeviceId();
+                
+                if (matchCount < 2 && !isLegacyMatch)
                 {
                     return new LoginResult { Success = false, Message = "Bu hesap başka bir cihazda aktifleştirilmiş. Bu cihazda kullanılamaz." };
+                }
+
+                // Eğer Legacy match ile girdiyse veya eksik donanım ID'si varsa profil bilgilerini güncelle (Tolerance Self-Healing)
+                if (isLegacyMatch || matchCount < 3)
+                {
+                    user.HardwareCpuId = currentProfile.CpuId;
+                    user.HardwareMotherboardId = currentProfile.MotherboardId;
+                    user.HardwareDiskId = currentProfile.DiskId;
+                    user.DeviceId = null; // Eski sistemi temizle
                 }
 
                 // Lisans Süresi Kontrolü
@@ -80,7 +105,7 @@ namespace ArcelikApp.Services
                 }
             }
 
-            // Oturum ID'si oluştur (Tek kişi girme kuralı için)
+            // Oturum ID'si oluştur
             string newSessionId = SecurityHelper.GenerateToken();
             user.CurrentSessionId = newSessionId;
             user.LastLoginDate = DateTime.Now;
@@ -102,7 +127,7 @@ namespace ArcelikApp.Services
 
             try
             {
-                db.SaveChanges();
+                await db.SaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -129,27 +154,48 @@ namespace ArcelikApp.Services
             return new LoginResult { Success = true, User = user };
         }
 
-        public static bool CheckAutoLogin()
+        public static async System.Threading.Tasks.Task<bool> CheckAutoLoginAsync()
         {
             string? token = TokenStorage.GetToken();
             if (string.IsNullOrEmpty(token)) return false;
 
             using var db = new AppDbContext();
-            var user = db.Users.FirstOrDefault(u => u.RememberMeToken == token && u.TokenExpiry > DateTime.Now);
+            
+            var userTask = db.Users.FirstOrDefaultAsync(u => u.RememberMeToken == token && u.TokenExpiry > DateTime.Now);
+            var hwProfileTask = SecurityHelper.GetHardwareProfileAsync();
+            
+            await System.Threading.Tasks.Task.WhenAll(userTask, hwProfileTask);
+            var user = userTask.Result;
+            var currentProfile = hwProfileTask.Result;
 
             if (user != null && user.IsActive)
             {
-                // Cihaz Kontrolü
-                if (user.DeviceId != SecurityHelper.GetDeviceId())
+                // Cihaz Kontrolü (Toleranslı)
+                int matchCount = 0;
+                if (!string.IsNullOrEmpty(user.HardwareCpuId) && user.HardwareCpuId == currentProfile.CpuId) matchCount++;
+                if (!string.IsNullOrEmpty(user.HardwareMotherboardId) && user.HardwareMotherboardId == currentProfile.MotherboardId) matchCount++;
+                if (!string.IsNullOrEmpty(user.HardwareDiskId) && user.HardwareDiskId == currentProfile.DiskId) matchCount++;
+
+                bool isLegacyMatch = !string.IsNullOrEmpty(user.DeviceId) && user.DeviceId == SecurityHelper.GetDeviceId();
+
+                if (matchCount < 2 && !isLegacyMatch)
                 {
                     TokenStorage.ClearToken();
                     return false;
                 }
 
+                if (isLegacyMatch || matchCount < 3)
+                {
+                    user.HardwareCpuId = currentProfile.CpuId;
+                    user.HardwareMotherboardId = currentProfile.MotherboardId;
+                    user.HardwareDiskId = currentProfile.DiskId;
+                    user.DeviceId = null;
+                }
+
                 string newSessionId = SecurityHelper.GenerateToken();
                 user.CurrentSessionId = newSessionId;
                 user.LastLoginDate = DateTime.Now;
-                db.SaveChanges();
+                await db.SaveChangesAsync();
 
                 CurrentUser = user;
                 SessionId = newSessionId;
@@ -231,17 +277,90 @@ namespace ArcelikApp.Services
             }
         }
 
-        public static bool ResetPassword(string username, string licenseKey, string newPassword)
+        public static async System.Threading.Tasks.Task<bool> SendPasswordResetCodeAsync(string username, string licenseKey)
         {
             using var db = new AppDbContext();
-            var user = db.Users.FirstOrDefault(u => u.Username == username && u.LicenseKey == licenseKey);
+            
+            var userTask = db.Users.FirstOrDefaultAsync(u => u.Username == username && u.LicenseKey == licenseKey);
+            var hwProfileTask = SecurityHelper.GetHardwareProfileAsync();
+            
+            await System.Threading.Tasks.Task.WhenAll(userTask, hwProfileTask);
+            var user = userTask.Result;
+            var currentProfile = hwProfileTask.Result;
+            
+            if (user == null || string.IsNullOrEmpty(user.Email)) return false;
+
+            if (user.IsActivated)
+            {
+                int matchCount = 0;
+                if (!string.IsNullOrEmpty(user.HardwareCpuId) && user.HardwareCpuId == currentProfile.CpuId) matchCount++;
+                if (!string.IsNullOrEmpty(user.HardwareMotherboardId) && user.HardwareMotherboardId == currentProfile.MotherboardId) matchCount++;
+                if (!string.IsNullOrEmpty(user.HardwareDiskId) && user.HardwareDiskId == currentProfile.DiskId) matchCount++;
+
+                bool isLegacyMatch = !string.IsNullOrEmpty(user.DeviceId) && user.DeviceId == SecurityHelper.GetDeviceId();
+
+                if (matchCount < 2 && !isLegacyMatch)
+                {
+                    return false;
+                }
+            }
+
+            // 6 haneli kod oluştur
+            string code = new Random().Next(100000, 999999).ToString();
+            user.PasswordResetCode = code;
+            user.PasswordResetCodeExpiry = DateTime.Now.AddMinutes(3);
+            
+            await db.SaveChangesAsync();
+
+            // E-postayı gönder
+            return await EmailService.SendPasswordResetCodeAsync(user.Email, code);
+        }
+
+        public static async System.Threading.Tasks.Task<bool> ResetPasswordAsync(string username, string licenseKey, string code, string newPassword)
+        {
+            using var db = new AppDbContext();
+            
+            var userTask = db.Users.FirstOrDefaultAsync(u => u.Username == username && u.LicenseKey == licenseKey);
+            var hwProfileTask = SecurityHelper.GetHardwareProfileAsync();
+            
+            await System.Threading.Tasks.Task.WhenAll(userTask, hwProfileTask);
+            var user = userTask.Result;
+            var currentProfile = hwProfileTask.Result;
             
             if (user == null) return false;
+
+            if (user.IsActivated)
+            {
+                int matchCount = 0;
+                if (!string.IsNullOrEmpty(user.HardwareCpuId) && user.HardwareCpuId == currentProfile.CpuId) matchCount++;
+                if (!string.IsNullOrEmpty(user.HardwareMotherboardId) && user.HardwareMotherboardId == currentProfile.MotherboardId) matchCount++;
+                if (!string.IsNullOrEmpty(user.HardwareDiskId) && user.HardwareDiskId == currentProfile.DiskId) matchCount++;
+
+                bool isLegacyMatch = !string.IsNullOrEmpty(user.DeviceId) && user.DeviceId == SecurityHelper.GetDeviceId();
+
+                if (matchCount < 2 && !isLegacyMatch)
+                {
+                    return false;
+                }
+            }
+
+            // Kod ve Süre Kontrolü
+            if (string.IsNullOrEmpty(user.PasswordResetCode) || 
+                user.PasswordResetCode != code || 
+                user.PasswordResetCodeExpiry < DateTime.Now)
+            {
+                return false; // Kod hatalı veya süresi geçmiş
+            }
 
             user.PasswordHash = SecurityHelper.HashPassword(newPassword);
             user.FailedLoginAttempts = 0;
             user.IsLocked = false;
-            db.SaveChanges();
+            
+            // Kullanılan kodu temizle
+            user.PasswordResetCode = null;
+            user.PasswordResetCodeExpiry = null;
+
+            await db.SaveChangesAsync();
             return true;
         }
 
@@ -258,7 +377,7 @@ namespace ArcelikApp.Services
             return key;
         }
 
-        public static RegisterResult Register(string username, string dealerName, string password, int agreementId)
+        public static RegisterResult Register(string username, string dealerName, string email, string password, int agreementId)
         {
             using var db = new AppDbContext();
             if (db.Users.Any(u => u.Username == username))
@@ -270,6 +389,7 @@ namespace ArcelikApp.Services
             {
                 Username = username,
                 DealerName = dealerName,
+                Email = email,
                 PasswordHash = SecurityHelper.HashPassword(password),
                 Role = "User",
                 LicenseKey = GenerateUniqueLicenseKey(db),

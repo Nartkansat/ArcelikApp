@@ -97,6 +97,23 @@ namespace ArcelikApp.Data
                 options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
             }
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Tüm Decimal alanları 18,2 (Para birimi için uygun format) olarak ayarla
+            foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+            {
+                var properties = entityType.GetProperties()
+                    .Where(p => p.ClrType == typeof(decimal) || p.ClrType == typeof(decimal?));
+
+                foreach (var property in properties)
+                {
+                    property.SetColumnType("decimal(18,2)");
+                }
+            }
+        }
     }
 
     /// <summary>

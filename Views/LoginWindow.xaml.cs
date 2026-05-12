@@ -176,7 +176,7 @@ namespace ArcelikExcelApp.Views
             BtnLogin.IsEnabled = false;
             TxtError.Visibility = Visibility.Collapsed;
 
-            var result = await Task.Run(() => AuthService.Login(username, password, license, remember));
+            var result = await AuthService.LoginAsync(username, password, license, remember);
 
             BtnLogin.IsEnabled = true;
 
@@ -212,6 +212,7 @@ namespace ArcelikExcelApp.Views
 
         private void LnkForgotPassword_Click(object sender, RoutedEventArgs e)
         {
+            ResetPasswordOverlayState();
             ResetOverlay.Visibility = Visibility.Visible;
         }
 
@@ -220,14 +221,70 @@ namespace ArcelikExcelApp.Views
             ResetOverlay.Visibility = Visibility.Collapsed;
         }
 
+        private void ResetPasswordOverlayState()
+        {
+            TxtResetUsername.Text = "";
+            TxtResetLicense.Text = "";
+            TxtResetCode.Text = "";
+            TxtResetNewPassword.Password = "";
+            TxtResetNewPasswordConfirm.Password = "";
+            TxtResetNewPasswordVisible.Text = "";
+            TxtResetNewPasswordConfirmVisible.Text = "";
+            
+            PanelResetPasswords.Visibility = Visibility.Collapsed;
+            BtnSendResetCode.Visibility = Visibility.Visible;
+            BtnConfirmReset.Visibility = Visibility.Collapsed;
+            BtnResendResetCode.Visibility = Visibility.Collapsed;
+            TxtResetError.Visibility = Visibility.Collapsed;
+            TxtResetUsername.IsEnabled = true;
+            TxtResetLicense.IsEnabled = true;
+        }
+
+        private async void BtnSendResetCode_Click(object sender, RoutedEventArgs e)
+        {
+            string username = TxtResetUsername.Text.Trim();
+            string license = TxtResetLicense.Text.Trim();
+
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(license))
+            {
+                ShowResetError("Lütfen kullanıcı adı ve lisans anahtarını girin.");
+                return;
+            }
+
+            BtnSendResetCode.IsEnabled = false;
+            BtnResendResetCode.IsEnabled = false;
+            TxtResetError.Visibility = Visibility.Collapsed;
+
+            bool success = await AuthService.SendPasswordResetCodeAsync(username, license);
+
+            BtnSendResetCode.IsEnabled = true;
+            BtnResendResetCode.IsEnabled = true;
+
+            if (success)
+            {
+                ShowToast("Doğrulama kodu e-posta adresinize gönderildi (3 dk geçerli).");
+                PanelResetPasswords.Visibility = Visibility.Visible;
+                BtnSendResetCode.Visibility = Visibility.Collapsed;
+                BtnConfirmReset.Visibility = Visibility.Visible;
+                BtnResendResetCode.Visibility = Visibility.Visible;
+                TxtResetUsername.IsEnabled = false;
+                TxtResetLicense.IsEnabled = false;
+            }
+            else
+            {
+                ShowResetError("Kullanıcı bulunamadı, yetkisiz cihaz veya e-posta tanımlı değil.");
+            }
+        }
+
         private async void BtnConfirmReset_Click(object sender, RoutedEventArgs e)
         {
             string username = TxtResetUsername.Text.Trim();
             string license = TxtResetLicense.Text.Trim();
+            string code = TxtResetCode.Text.Trim();
             string newPass = TxtResetNewPasswordVisible.IsVisible ? TxtResetNewPasswordVisible.Text : TxtResetNewPassword.Password;
             string newPassConfirm = TxtResetNewPasswordConfirmVisible.IsVisible ? TxtResetNewPasswordConfirmVisible.Text : TxtResetNewPasswordConfirm.Password;
 
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(license) || string.IsNullOrEmpty(newPass) || string.IsNullOrEmpty(newPassConfirm))
+            if (string.IsNullOrEmpty(code) || string.IsNullOrEmpty(newPass) || string.IsNullOrEmpty(newPassConfirm))
             {
                 ShowResetError("Lütfen tüm alanları doldurun.");
                 return;
@@ -247,7 +304,7 @@ namespace ArcelikExcelApp.Views
 
             BtnConfirmReset.IsEnabled = false;
             
-            bool success = await Task.Run(() => AuthService.ResetPassword(username, license, newPass));
+            bool success = await AuthService.ResetPasswordAsync(username, license, code, newPass);
             
             BtnConfirmReset.IsEnabled = true;
 
@@ -259,7 +316,7 @@ namespace ArcelikExcelApp.Views
             }
             else
             {
-                ShowResetError("Kullanıcı adı veya lisans anahtarı hatalı.");
+                ShowResetError("Doğrulama kodu hatalı veya süresi dolmuş olabilir.");
             }
         }
 
@@ -379,6 +436,13 @@ namespace ArcelikExcelApp.Views
                     TxtAgreementVersion.Text = $"Kullanıcı Sözleşmesi ({agreement.Version})";
                     TxtAgreementContent.Text = agreement.Content;
                     AgreementOverlay.Visibility = Visibility.Visible;
+
+                    // Zorunlu onay durumunda arka plandaki etkileşimi kes
+                    if (_isEnforcedAgreement)
+                    {
+                        ViewLogin.IsEnabled = false;
+                        ViewRegister.IsEnabled = false;
+                    }
                 }
                 else
                 {
@@ -418,17 +482,22 @@ namespace ArcelikExcelApp.Views
 
             ChkAgreement.IsChecked = true;
             AgreementOverlay.Visibility = Visibility.Collapsed;
+            
+            // Etkileşimi geri aç
+            ViewLogin.IsEnabled = true;
+            ViewRegister.IsEnabled = true;
         }
 
         private async void BtnRegister_Click(object sender, RoutedEventArgs e)
         {
             string username = TxtRegUsername.Text.Trim();
             string dealerName = TxtRegDealerName.Text.Trim();
+            string email = TxtRegEmail.Text.Trim();
             
             string password = TxtRegPasswordVisible.IsVisible ? TxtRegPasswordVisible.Text : TxtRegPassword.Password;
             string passwordConfirm = TxtRegPasswordConfirmVisible.IsVisible ? TxtRegPasswordConfirmVisible.Text : TxtRegPasswordConfirm.Password;
 
-            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(dealerName) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(passwordConfirm))
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(dealerName) || string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password) || string.IsNullOrEmpty(passwordConfirm))
             {
                 ShowRegError("Lütfen tüm alanları doldurun.");
                 return;
@@ -455,7 +524,7 @@ namespace ArcelikExcelApp.Views
             BtnRegister.IsEnabled = false;
             TxtRegError.Visibility = Visibility.Collapsed;
 
-            var result = await Task.Run(() => AuthService.Register(username, dealerName, password, _currentAgreementId));
+            var result = await Task.Run(() => AuthService.Register(username, dealerName, email, password, _currentAgreementId));
 
             BtnRegister.IsEnabled = true;
 

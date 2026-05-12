@@ -59,5 +59,44 @@ namespace ArcelikApp.Services
             catch { }
             return "127.0.0.1";
         }
+
+        public class HardwareProfile
+        {
+            public string CpuId { get; set; } = string.Empty;
+            public string MotherboardId { get; set; } = string.Empty;
+            public string DiskId { get; set; } = string.Empty;
+        }
+
+        public static async System.Threading.Tasks.Task<HardwareProfile> GetHardwareProfileAsync()
+        {
+            return await System.Threading.Tasks.Task.Run(() =>
+            {
+                return new HardwareProfile
+                {
+                    CpuId = GetWmiProperty("Win32_Processor", "ProcessorId"),
+                    MotherboardId = GetWmiProperty("Win32_ComputerSystemProduct", "UUID"),
+                    DiskId = GetWmiProperty("Win32_DiskDrive", "SerialNumber")
+                };
+            });
+        }
+
+        private static string GetWmiProperty(string wmiClass, string property)
+        {
+            try
+            {
+                using var searcher = new System.Management.ManagementObjectSearcher($"SELECT {property} FROM {wmiClass}");
+                foreach (System.Management.ManagementObject obj in searcher.Get())
+                {
+                    var val = obj[property]?.ToString()?.Trim();
+                    // Some motherboards return generic strings, ignore them
+                    if (!string.IsNullOrEmpty(val) && !val.Contains("FFFFFFFF"))
+                    {
+                        return val;
+                    }
+                }
+            }
+            catch { }
+            return "UNKNOWN";
+        }
     }
 }
