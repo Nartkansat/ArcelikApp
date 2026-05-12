@@ -34,9 +34,13 @@ public partial class App : Application
         catch { }
 
         // Güncelleme varsa: AutoUpdater zaten Forced dialog'unu gösteriyor.
-        // Hiçbir uygulama penceresi açılmamalı; dialog kapanınca Mode.Forced uygulamayı kapatır.
+        // OnExplicitShutdown: Pencere olmasa bile WPF uygulamayı kapatmasın.
+        // AutoUpdater'ın Mode.Forced'ı, dialog kapanınca Environment.Exit() ile kapatır.
         if (updateAvailable)
+        {
+            Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
             return;
+        }
 
         // 2. WAMP kontrolünü arka planda başlat (UI'ı bloke etme)
         _ = Task.Run(() => EnsureWampRunningAsync());
