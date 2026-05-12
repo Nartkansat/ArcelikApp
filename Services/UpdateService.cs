@@ -1,26 +1,47 @@
 using System;
-using System.Windows;
+using System.Threading.Tasks;
 using AutoUpdaterDotNET;
 
 namespace ArcelikApp.Services
 {
     public static class UpdateService
     {
+        // GitHub deponuz Public olduğu için direkt raw URL kullanıyoruz.
         private const string UpdateXmlUrl = "https://raw.githubusercontent.com/nartkansat/ArcelikApp/main/update.xml";
 
-        // Güncelleme bulunduysa true olur — App.xaml.cs bu flag'i kontrol eder
-        public static volatile bool UpdateRequired = false;
-
-        public static void CheckForUpdates()
+        /// <summary>
+        /// Güncelleme kontrolü yapar ve sonucu bekler.
+        /// Güncelleme mevcutsa <c>true</c> döner (AutoUpdater zorlu dialog'u gösterir).
+        /// İnternet yoksa veya güncelleme yoksa <c>false</c> döner.
+        /// </summary>
+        public static Task<bool> CheckForUpdatesAsync()
         {
-            // Güncelleme sonucunu dinle
-            AutoUpdater.CheckForUpdateEvent += OnCheckForUpdate;
+            var tcs = new TaskCompletionSource<bool>();
 
-            AutoUpdater.ShowRemindLaterButton = false;
-            AutoUpdater.ShowSkipButton        = false;
+            // Local function kullanıyoruz — delegate tipini açıkça yazmaktan kaçınmak için
+            // Bu sayede event'ten unsubscribe da yapılabiliyor
+            void Handler(UpdateInfoEventArgs args)
+            {
+                AutoUpdater.CheckForUpdateEvent -= Handler; // Sadece bir kez çalış
+
+                if (args.Error != null || !args.IsUpdateAvailable)
+                {
+                    // İnternet yok veya güncelleme yok → uygulamayı engelleme
+                    tcs.TrySetResult(false);
+                }
+                else
+                {
+                    // Güncelleme var → AutoUpdater zaten Forced dialog'u gösterecek
+                    tcs.TrySetResult(true);
+                }
+            }
+
+            AutoUpdater.CheckForUpdateEvent += Handler;
+            AutoUpdater.ShowRemindLaterButton = false; // Hatırlat butonunu kaldır
+            AutoUpdater.ShowSkipButton        = false; // Atla butonunu kaldır
             AutoUpdater.RunUpdateAsAdmin      = true;
-            AutoUpdater.Mandatory             = true;
-            AutoUpdater.UpdateMode            = Mode.Forced;
+            AutoUpdater.Mandatory             = true;              // Zorunlu güncelleme modu
+            AutoUpdater.UpdateMode            = Mode.Forced;       // Dialog kapanınca uygulamayı da kapatır
             AutoUpdater.DownloadPath          = Environment.CurrentDirectory;
 
             try
@@ -29,31 +50,13 @@ namespace ArcelikApp.Services
             }
             catch
             {
-                AutoUpdater.CheckForUpdateEvent -= OnCheckForUpdate;
+                // Başlatma hatası → engelleme
+                AutoUpdater.CheckForUpdateEvent -= Handler;
+                tcs.TrySetResult(false);
             }
-        }
 
-        private static void OnCheckForUpdate(UpdateInfoEventArgs args)
-        {
-            AutoUpdater.CheckForUpdateEvent -= OnCheckForUpdate;
-
-            if (args.Error != null || !args.IsUpdateAvailable)
-                return;
-
-            // Güncelleme var — flag'i işaretle ve açık pencereleri kapat
-            UpdateRequired = true;
-
-            Application.Current.Dispatcher.BeginInvoke(() =>
-            {
-                // Açılmış olan tüm pencereleri kapat
-                foreach (Window w in Application.Current.Windows)
-                    w.Close();
-
-                // WPF'nin "pencere yok = kapat" davranışını engelle;
-                // AutoUpdater Mode.Forced kendi dialog'unu gösterecek ve
-                // işlem bitince Environment.Exit() ile uygulamayı kapatacak
-                Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
-            });
+            return tcs.Task;
         }
     }
 }
+

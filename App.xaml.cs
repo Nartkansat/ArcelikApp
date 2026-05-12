@@ -21,16 +21,27 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
-        // 1. Güncelleme kontrolünü başlat (fire-and-forget)
-        // CheckForUpdateEvent içinde güncelleme varsa UpdateRequired = true yapılır
-        // ve açık pencereler kapatılır
-        try { UpdateService.CheckForUpdates(); } catch { }
+        // 1. Güncelleme kontrolünü BEKLE — sonuç gelmeden hiçbir pencere açılmasın
+        bool updateAvailable = false;
+        try
+        {
+            var updateTask = UpdateService.CheckForUpdatesAsync();
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(15)); // Yavaş ağ için güvenlik süresi
+            var winner = await Task.WhenAny(updateTask, timeoutTask);
+            if (winner == updateTask)
+                updateAvailable = updateTask.Result;
+        }
+        catch { }
+
+        // Güncelleme varsa: AutoUpdater zaten Forced dialog'unu gösteriyor.
+        // Hiçbir uygulama penceresi açılmamalı; dialog kapanınca Mode.Forced uygulamayı kapatır.
+        if (updateAvailable)
+            return;
 
         // 2. WAMP kontrolünü arka planda başlat (UI'ı bloke etme)
         _ = Task.Run(() => EnsureWampRunningAsync());
 
-        // 3. Auto-login kontrolü — bu süre zarfında (genellikle 1-3 sn)
-        //    güncelleme HTTP isteği de tamamlanmış olur
+        // 3. Auto-login kontrolünü arka planda yap
         bool autoLoginSuccess = false;
         try
         {
@@ -38,17 +49,12 @@ public partial class App : Application
         }
         catch { }
 
-        // 4. Güncelleme gerekiyorsa pencere açma — AutoUpdater Forced dialog'unu
-        //    zaten gösteriyor, ShutdownMode OnCheckForUpdate içinde ayarlandı
-        if (UpdateService.UpdateRequired)
-            return;
-
-        // 5. Normal akış
         if (autoLoginSuccess && AuthService.CurrentUser != null)
         {
             if (AuthService.MustAcceptLatestAgreement(AuthService.CurrentUser.Id))
             {
-                AuthService.Logout();
+                // Must accept latest agreement - go to LoginWindow with a flag or it will check again
+                AuthService.Logout(); // Logout to force them through LoginWindow's agreement check
                 var loginWindow = new LoginWindow();
                 loginWindow.Show();
             }
@@ -61,6 +67,7 @@ public partial class App : Application
         else
         {
             var loginWindow = new LoginWindow();
+            // LoginWindow zaten Loaded olayında bağlantıyı tekrar kontrol edecek
             loginWindow.Show();
         }
     }
@@ -69,6 +76,7 @@ public partial class App : Application
     {
         try
         {
+            // Zaten çalışıyor mu?
             bool calisiyorMu = Process.GetProcesses()
                 .Any(p => p.ProcessName.Equals(WampProcessName, StringComparison.OrdinalIgnoreCase));
 
@@ -78,12 +86,14 @@ public partial class App : Application
                 return;
             }
 
+            // Kurulu mu?
             if (!File.Exists(WampExePath))
             {
                 Debug.WriteLine($"WampServer bulunamadı: {WampExePath}");
                 return;
             }
 
+            // Başlat (yönetici olarak)
             try
             {
                 var startInfo = new ProcessStartInfo
@@ -101,6 +111,7 @@ public partial class App : Application
                 return;
             }
 
+            // WAMP process görünene kadar max 10 sn bekle (async)
             await WaitForProcessAsync(WampProcessName, timeoutSeconds: 10);
         }
         catch (Exception ex)
@@ -112,7 +123,7 @@ public partial class App : Application
     private static async Task WaitForProcessAsync(string processName, int timeoutSeconds)
     {
         int elapsed = 0;
-        const int interval = 1000;
+        const int interval = 1000; // ms
         int maxMs = timeoutSeconds * 1000;
 
         while (elapsed < maxMs)
